@@ -7,8 +7,10 @@
            Get-ObjectClass "Username"
         .EXAMPLE
            Get-ObjectClass CN=Username,OU=Users,DC=Domain,DC=LOCAL
+        .EXAMPLE
+           get-aduser -filter * | Get-ObjectClass
         .INPUTS
-           [String[]] (SamAccountName, SID, Distinguished Name
+           [String[]] (SamAccountName, SID, DistinguishedName)
         .OUTPUTS
            [string[]]
         .NOTES
