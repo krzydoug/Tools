@@ -1,7 +1,48 @@
 function Get-RemoteScreenshot {
+<#
+
+.SYNOPSIS
+	This script contains the required functions/task template to create screenshot of the remote PC
+
+.DESCRIPTION
+	The script should be called directly or dot sourced to load the Get-RemoteScreenshot function into the function PS drive.
+	
+.PARAMETER ComputerName
+	Specifies the remote computer to try and capture screenshot from. This parameter is required.
+
+.PARAMETER Path
+	Optional parameter specifying the path to save the collected screenshots in. $env:temp is default.
+
+.NOTES
+	This script has been tested on windows 7 and windows 10. It has not been tested against Terminal Server.
+	It creates scheduled task targeting "users" group, tries to run it, then tries to delete it.
+	Finally, it will attempt to move the screenshot from the remote C:\temp to the local path.
+	Naturally, the script works best with a logged in user. From my testing it will work on RDP session as long as it's not minimized.
+	
+
+.EXAMPLE
+'PC1','PC2','PC3' | Get-RemoteScreenshot -Path c:\temp -verbose
+Description
+-----------
+This command will attempt to retrieve screenshot from PC1, PC2, and PC3 and save them in calling host c:\temp directory.
+
+.EXAMPLE
+get-adcomputer -filter "name -like '*wks*' | select -name | Get-RemoteScreenshot
+Description
+-----------
+This command will query AD for any computer named *wks*, attempt to retrieve screenshots from them, and save them in calling host $env:temp directory.
+
+.LINK
+	https://github.com/krzydoug/Tools/blob/master/Get-RemoteScreenshot.ps1
+#>
+
+
+    #Requires -RunAsAdministrator
+
     [cmdletbinding()]
     Param(
         [Parameter(Mandatory=$True,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias("PC","Name","CN","Hostname")]
         [string[]] $ComputerName,
 
         [Parameter()]             
@@ -183,7 +224,7 @@ function Get-RemoteScreenshot {
                 
                 # Searching remote PC c:\temp directory for screenshot file
                 Write-Verbose -Message "Moving screenshot from $pc to the local pc"
-                $rfile = Get-ChildItem -Path $rpath -Filter "*$filename*" -File | select -ExpandProperty name
+                $rfile = Get-ChildItem -Path $rpath -Filter "*$filename*" -File | select -last 1 -ExpandProperty name
 
                 if($rfile.count -gt 0)
                 {
