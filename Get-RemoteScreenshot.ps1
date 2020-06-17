@@ -1,4 +1,5 @@
-function Get-RemoteScreenshot {
+function Get-RemoteScreenshot
+{
 <#
 
 .SYNOPSIS
@@ -6,7 +7,6 @@ function Get-RemoteScreenshot {
 
 .DESCRIPTION
 	The script should be called directly or dot sourced to load the Get-RemoteScreenshot function into the function PS drive.
-	
 .PARAMETER ComputerName
 	Specifies the remote computer to try and capture screenshot from. This parameter is required.
 
@@ -41,13 +41,24 @@ This command will query AD for any computer named *wks*, attempt to retrieve scr
 
     [cmdletbinding()]
     Param(
-        [Parameter(Mandatory=$True,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [Alias("PC","Name","CN","Hostname")]
-        [string[]] $ComputerName,
+        [Parameter(
+            Mandatory=$True,
+            ValueFromPipeline=$True,
+            ValueFromPipelineByPropertyName=$True
+        )]
+        [Alias(
+            "PC",
+            "Name",
+            "CN",
+            "Hostname"
+        )]
+        [string[]]$ComputerName,
 
         [Parameter()]             
-        [ValidateScript({Test-Path -Path $_ })]
-        [string] $Path
+        [ValidateScript({
+            Test-Path -Path $_ 
+        })]
+        [string]$Path
     )
 
     begin
@@ -57,77 +68,69 @@ This command will query AD for any computer named *wks*, attempt to retrieve scr
 
         Write-Verbose -Message "Defining functions"
 
-        Function Take-SShot {
+        Function Take-SShot
+        {
             Param($pc)
 
             $ErrorActionPreference = 'stop'
 
             # -------------------------------  Optional - modify this for your environment  -------------------------------
 
-            # temporary location on remote PC for script
-            $localscript = "c:\Temp\Take-Screenshot.ps1"
+            # temporary location on remote PC for scripts
+            $localpsscript = "c:\Temp\Take-Screenshot.ps1"
+            $localvbscript = "c:\Temp\launch.vbs"
 
             # -------------------------------  Don't modify anything past this line  -------------------------------
 
-            $remotescript = @'
-                Function Take-Screenshot {
-                [CmdletBinding()] Param(
-           
-                        [ValidateScript({Test-Path -Path $_ })]
-                        [string] $Path
-  
-                        )
+            $psscript = @'
+                Function Take-Screenshot
+                {
+                [CmdletBinding()]
+                Param(
+                    [ValidateScript({
+                        Test-Path -Path $_
+                    })]
+                    [string]$Path
+                )
     
-                    #Define helper function that generates and saves screenshot
-                    Function GenScreenshot {
-                       $ScreenBounds = [Windows.Forms.SystemInformation]::VirtualScreen
-                       $ScreenshotObject = New-Object Drawing.Bitmap $ScreenBounds.Width, $ScreenBounds.Height
-                       $DrawingGraphics = [Drawing.Graphics]::FromImage($ScreenshotObject)
-                       $DrawingGraphics.CopyFromScreen( $ScreenBounds.Location, [Drawing.Point]::Empty, $ScreenBounds.Size)
-                       $DrawingGraphics.Dispose()
-                       $ScreenshotObject.Save($FilePath)
-                       $ScreenshotObject.Dispose()
-                    }
+                #Define helper function that generates and saves screenshot
+                Function GenScreenshot
+                {
+                    $ScreenBounds = [Windows.Forms.SystemInformation]::VirtualScreen
+                    $ScreenshotObject = New-Object Drawing.Bitmap $ScreenBounds.Width, $ScreenBounds.Height
+                    $DrawingGraphics = [Drawing.Graphics]::FromImage($ScreenshotObject)
+                    $DrawingGraphics.CopyFromScreen( $ScreenBounds.Location, [Drawing.Point]::Empty, $ScreenBounds.Size)
+                    $DrawingGraphics.Dispose()
+                    $ScreenshotObject.Save($FilePath)
+                    $ScreenshotObject.Dispose()
+                }
 
-                    Try {
-            
-                        #load required assembly
-                        Add-Type -Assembly System.Windows.Forms            
+                Try
+                {
+                    #load required assembly
+                    Add-Type -Assembly System.Windows.Forms            
 
-                            #get the current time and build the filename from it
-                            $Time = (Get-Date)
+                    # Build filename from PC, user, and the current date/time.
+                    $FileName = "${env:computername}-${env:username}-{0}.png" -f (Get-Date).ToString("yyyyMMdd-HHmmss")
+
+                    $FilePath = Join-Path $path $FileName
+
+                    #run screenshot function
+                    GenScreenshot
                 
-                            [string]$FileName = "$($env:computername)-$($env:username)-$($Time.Month)"
-                            $FileName += '-'
-                            $FileName += "$($Time.Day)" 
-                            $FileName += '-'
-                            $FileName += "$($Time.Year)"
-                            $FileName += '-'
-                            $FileName += "$($Time.Hour)"
-                            $FileName += '-'
-                            $FileName += "$($Time.Minute)"
-                            $FileName += '-'
-                            $FileName += "$($Time.Second)"
-                            $FileName += '.png'
+                    Write-Verbose "Saved screenshot to $FilePath."
+                }
+                Catch
+                {
+                    Write-Warning $Error[0]
+                }
 
-                            #use join-path to add path to filename
-                            [string] $FilePath = (Join-Path $path $FileName)
+        }
 
-                            #run screenshot function
-                            GenScreenshot
-                
-                            Write-Verbose "Saved screenshot to $FilePath. Sleeping for $Interval seconds"
-		
-                    }
-
-                   Catch {Write-Warning "$Error[0].ToString() + $Error[0].InvocationInfo.PositionMessage"}
-
-            }
-
-            Take-Screenshot -path C:\Temp
+        Take-Screenshot -path C:\Temp
 '@
             
-            # scheduled task template
+#region scheduled task template
             $task = @"
 <?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.3" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
@@ -168,17 +171,50 @@ This command will query AD for any computer named *wks*, attempt to retrieve scr
     </Settings>
     <Actions>
     <Exec>
-        <Command>C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe</Command>
-        <Arguments>-NoProfile -windowstyle hidden $localscript</Arguments>
+        <Command>wscript.exe</Command>
+        <Arguments>$localvbscript /B</Arguments>
     </Exec>
     </Actions>
 </Task>
 "@
+#endregion
 
+#region VBScript template
+            $VBscript = @"
+    Dim objShell,objFSO,objFile
+
+    Set objShell=CreateObject("WScript.Shell")
+    Set objFSO=CreateObject("Scripting.FileSystemObject")
+
+    'enter the path for your PowerShell Script
+    strPath="$localpsscript"
+
+    'verify file exists
+    If objFSO.FileExists(strPath) Then
+    'return short path name
+        set objFile=objFSO.GetFile(strPath)
+        strCMD="powershell -nologo -ex bypass -nop -Command " & Chr(34) & "&{" &_
+            objFile.ShortPath & "}" & Chr(34)
+        'Uncomment next line for debugging
+        'WScript.Echo strCMD
+   
+        'use 0 to hide window
+        objShell.Run strCMD,0
+
+    Else
+
+    'Display error message
+        WScript.Echo "Failed to find " & strPath
+        WScript.Quit
+   
+    End If
+"@
+#endregion
+            
             Write-Verbose -Message "Gathering environment variables"
             $taskfile = Join-Path $env:TEMP -ChildPath "SShot-Task.xml"
             
-            if(!$path){$path = $env:TEMP}
+            if( -not $path ){$path = $env:TEMP}
             $rpath = "\\$pc\c$\Temp\"
             
             if( -not ( test-path $rpath ) )
@@ -187,28 +223,21 @@ This command will query AD for any computer named *wks*, attempt to retrieve scr
             }
 
             # script on the remote host from calling hosts context
-            $rscript = Join-Path $rpath -ChildPath "Take-Screenshot.ps1"
+            $psscriptfile = Join-Path $rpath -ChildPath "Take-Screenshot.ps1"
             
+            $vbscriptfile = Join-Path $rpath -ChildPath "launch.vbs"
+
             # Search pattern for screenshot filename
-            $Time = (Get-Date)
-            [string] $FileName = "$pc-"
-            $FileName += '*'
-            $FileName += "-$($Time.Month)"
-            $FileName += '-'
-            $FileName += "$($Time.Day)" 
-            $FileName += '-'
-            $FileName += "$($Time.Year)"
-            $FileName += '-'
-            $FileName += "$($Time.Hour)"
-            $FileName += '-'
+            $FileName = "$pc-*-{0}" -f (Get-Date).ToString("yyyyMMdd-HH")
 
             try
             {
                 Write-Verbose -Message "Creating remote files on $pc"
 
-                # Create the ps1 and the task template on the remote PC
-                $remotescript | Set-Content -Path $rscript -Encoding Ascii -Force
-                $task | Set-Content -Path $taskfile -Encoding Ascii
+                # Create the ps1, vbs, and the task template on the remote PC
+                $psscript | Set-Content -Path $psscriptfile -Encoding Ascii -Force
+                $task     | Set-Content -Path $taskfile -Encoding Ascii
+                $VBscript | Set-Content -Path $vbscriptfile -Encoding Ascii
                 
                 # Attempt to create, run, and then delete scheduled task
                 Write-Verbose -Message "Creating scheduled task on $pc"
@@ -217,22 +246,35 @@ This command will query AD for any computer named *wks*, attempt to retrieve scr
 
                 Write-Verbose -Message "Running scheduled task on $pc"
                 schtasks /run /tn "\Remote SShot" /S $pc | out-null
-                Start-Sleep -Seconds 1
+
+                do
+                {
+                    Start-Sleep -Seconds 1
+                    $taskstatus = ((schtasks /query /tn "Remote SShot" /S $pc /FO list | Select-String -Pattern 'Status:') -split ':')[1].trim()
+                }
+                until ($taskstatus -ne 'running')
+                
+                $retries = 0
+                do
+                {
+                    Write-Verbose "Loop $retries waiting for file creation on $pc"
+                    Start-Sleep -Seconds 2
+                    $rfile = Get-ChildItem -Path $rpath -Filter "$filename*" -File | select -last 1 -ExpandProperty name
+                    $retries++
+                }
+                until ($rfile.count -gt 0 -or $retries -eq 5)
 
                 Write-Verbose -Message "Deleting scheduled task on $pc"
                 schtasks /delete /tn "\Remote SShot" /S $pc /F | Out-Null
                 
-                # Searching remote PC c:\temp directory for screenshot file
-                Write-Verbose -Message "Moving screenshot from $pc to the local pc"
-                $rfile = Get-ChildItem -Path $rpath -Filter "*$filename*" -File | select -last 1 -ExpandProperty name
-
                 if($rfile.count -gt 0)
                 {
                     # Screenshot found, move it and finally open it
+                    Write-Verbose -Message "Moving screenshot from $pc to the local pc"
                     $lfile = Join-Path $path -ChildPath $rfile
                     $frpath = Join-Path $rpath -ChildPath $rfile
                     $lfile = move-Item -Path $frpath -Destination $path -Force -PassThru
-                    Start-Sleep -Seconds 1
+                    Start-Sleep -Milliseconds 500
                 }
                 else
                 {
@@ -240,11 +282,24 @@ This command will query AD for any computer named *wks*, attempt to retrieve scr
                 }
 
             }
+            Catch
+            {
+                Write-Warning $Error[0]
+            }
             Finally
             {
                 Write-Verbose -Message "Deleting temporary files"
-                Remove-Item $remotescript,$taskfile -Force -ErrorAction SilentlyContinue
-                if($lfile){$lfile | Invoke-Item}
+
+                try
+                {
+                    Remove-Item $psscriptfile,$taskfile,$vbscriptfile -Force -ErrorAction SilentlyContinue
+                    if($lfile){$lfile | Invoke-Item}
+                }
+                catch
+                {
+                    Write-Warning $Error[0]
+                }
+
                 
             }
         }
