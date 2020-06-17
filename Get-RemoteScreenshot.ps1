@@ -7,6 +7,7 @@ function Get-RemoteScreenshot
 
 .DESCRIPTION
 	The script should be called directly or dot sourced to load the Get-RemoteScreenshot function into the function PS drive.
+	
 .PARAMETER ComputerName
 	Specifies the remote computer to try and capture screenshot from. This parameter is required.
 
