@@ -1,4 +1,4 @@
-﻿Function Get-InstalledPrograms{
+Function Get-InstalledPrograms{
     <#
 .Synopsis
 Get a list of installed programs from local or remote computers.
@@ -9,9 +9,9 @@ Get a list of installed programs from local or remote computers. Will pull list 
 .NOTES   
 Name: Get-InstalledPrograms.ps1
 Author: Doug Maurer
-Version: 1.0.2.2
+Version: 2.0.0.1
 DateCreated: 2018-11-22
-DateUpdated: 2019-04-10
+DateUpdated: 2020-08-08
 
 .LINK
 
@@ -97,19 +97,25 @@ Get-InstalledPrograms -name 'server1','server2','wks1' | tee-object -variable re
                     $NewSubKey=$SubBranch+"\\"+$key
                     $Readkey=$registry.OpenSubKey($NewSubKey)
                     try{
-                    $Displayname=$Readkey.GetValue("DisplayName")
-                    $UninstallString = $readkey.GetValue("UninstallString")
+                        $Displayname     = $Readkey.GetValue("DisplayName")
+                        $Version         = $readkey.GetValue("DisplayVersion")
+                        $Publisher       = $readkey.GetValue("Publisher")
+                        $InstallDate     = [datetime]::ParseExact($readkey.GetValue("InstallDate"),'yyyyMMdd',$null)
+                        $InstallLocation = $readkey.GetValue("InstallLocation")
+                        $UninstallString = $readkey.GetValue("UninstallString")
                     }
                     catch{}
-                    $properties = [ordered]@{
-                        PC = $PC
-                        Displayname = $displayname
-                        Architecture = $_.bit
-                        Subkey= $key
+                    [PSCustomObject]@{
+                        PC              = $PC
+                        Displayname     = $displayname
+                        Version         = $Version
+                        Publisher       = $Publisher
+                        InstallDate     = $InstallDate 
+                        Architecture    = $_.bit
+                        Subkey          = $key
+                        InstallLocation = $InstallLocation
                         UninstallString = $UninstallString
-                }
-                $obj = New-Object -TypeName PSObject -Property $properties
-                write-output $obj
+                    }
                 }
             }
 
@@ -117,7 +123,7 @@ Get-InstalledPrograms -name 'server1','server2','wks1' | tee-object -variable re
             if($registry){$registry.close()}
             if($servicedisabled){Set-Service -InputObject $regservice -StartupType Disabled}
             if($servicestarted){Stop-Service -InputObject $regservice -ErrorAction SilentlyContinue}
-            
+
         }
     }
     end{}
