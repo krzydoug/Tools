@@ -39,10 +39,8 @@ Function Get-NetworkDevice {
     $mactable = (Invoke-RestMethod https://gitlab.com/wireshark/wireshark/-/raw/master/manuf) -replace '\t','|' |
         ConvertFrom-Csv -Delimiter '|' -Header MAC,'VendorCode','Vendor' | where mac -notmatch '^[#]'
 
-    $devices = arp -a | ConvertFrom-String -TemplateContent $template |
+    arp -a | ConvertFrom-String -TemplateContent $template |
         where ip -notin $exclude | Where-Object MAC -ne 'ff-ff-ff-ff-ff-ff' -OutVariable devices |
             select *,@{n='Vendor';e={Resolve-Vendor $_.MAC}}
-    
-    $devices | group -Property vendor -NoElement |
-        sort count -Descending | Format-Table -AutoSize 
+            
 }
