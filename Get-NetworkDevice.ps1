@@ -41,7 +41,7 @@ Function Get-NetworkDevice {
 
     $devices = arp -a | ConvertFrom-String -TemplateContent $template |
         where ip -notin $exclude | Where-Object MAC -ne 'ff-ff-ff-ff-ff-ff' -OutVariable devices |
-            select *,@{n='Vendor';e={Resolve-Vendor $_.MAC -Verbose}}
+            select *,@{n='Vendor';e={Resolve-Vendor $_.MAC}}
     
     $devices | group -Property vendor -NoElement |
         sort count -Descending | Format-Table -AutoSize 
