@@ -1,4 +1,4 @@
-﻿function Get-PingableHost{
+function Get-PingableHost{
     <#
 .Synopsis
 Rapidly sends 1 ping to a list of computers, IPs, or domains and returns a pingablehost object.
