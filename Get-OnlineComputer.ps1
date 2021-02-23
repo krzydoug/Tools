@@ -1,4 +1,4 @@
-﻿function Get-OnlineComputer{
+function Get-OnlineComputer{
 [Cmdletbinding(DefaultParameterSetName='Timeout')]
 Param(
     
