@@ -41,7 +41,7 @@ Function Get-ImagesFromPdf {
         $pdfimgtool = & $findimgtool
         
         if(!$pdfimgtool){
-            Write-Warning "pdfimgages.exe not found"
+            Write-Warning "pdfimages.exe not found"
             break
         }
     }
