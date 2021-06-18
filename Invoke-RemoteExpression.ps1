@@ -1,4 +1,4 @@
-﻿Function Invoke-RemoteExpression {
+Function Invoke-RemoteExpression {
     ##############################################################################
     ##
     ## Invoke-RemoteExpression
