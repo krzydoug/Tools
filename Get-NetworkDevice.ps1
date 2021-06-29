@@ -1,5 +1,7 @@
 Function Get-NetworkDevice {
 
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
     Function Resolve-Vendor {
         [cmdletbinding()]
         Param($MAC)
@@ -34,7 +36,7 @@ Function Get-NetworkDevice {
 
     $exclude = '239.255.255.250','234.0.168.192','224.0.0.252','224.0.0.22'
 
-    $maccache = [System.Collections.Generic.List[PSCustomobject]]::new()
+    $maccache = New-Object System.Collections.Generic.List[PSCustomobject]
 
     $mactable = (Invoke-RestMethod https://gitlab.com/wireshark/wireshark/-/raw/master/manuf) -replace '\t','|' |
         ConvertFrom-Csv -Delimiter '|' -Header MAC,'VendorCode','Vendor' | where mac -notmatch '^[#]'
