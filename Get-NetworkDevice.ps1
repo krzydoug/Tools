@@ -34,15 +34,27 @@ Function Get-NetworkDevice {
       {IP*:123.254.234.210}          {MAC:11-22-8e-c1-5b-96}     {Type:static}  
 '@
 
-    $exclude = '239.255.255.250','234.0.168.192','224.0.0.252','224.0.0.22'
+    $exclude = ('239','234','224' | ForEach-Object {"^$_"}) -join '|'
 
     $maccache = New-Object System.Collections.Generic.List[PSCustomobject]
 
     $mactable = (Invoke-RestMethod https://gitlab.com/wireshark/wireshark/-/raw/master/manuf) -replace '\t','|' |
         ConvertFrom-Csv -Delimiter '|' -Header MAC,'VendorCode','Vendor' | where mac -notmatch '^[#]'
+    
+    $arpcache = switch -Regex (arp -a){
+        '^\s{1,}\d' {
+            , -split $_ | ForEach-Object {
+                [PSCustomObject]@{
+                    IP   = $_[0]
+                    MAC  = $_[1]
+                    Type = $_[2]
+                }
+            }
+        }
+    }
 
-    arp -a | ConvertFrom-String -TemplateContent $template |
-        where ip -notin $exclude | Where-Object MAC -ne 'ff-ff-ff-ff-ff-ff' -OutVariable devices |
-            select *,@{n='Vendor';e={Resolve-Vendor $_.MAC}}
+    $arpcache | Where-Object ip -notmatch $exclude |
+        Where-Object MAC -ne 'ff-ff-ff-ff-ff-ff' -OutVariable devices |
+            Select-Object *,@{n='Vendor';e={Resolve-Vendor $_.MAC}}
             
 }
