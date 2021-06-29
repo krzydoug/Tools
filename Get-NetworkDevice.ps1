@@ -34,7 +34,7 @@ Function Get-NetworkDevice {
     $maccache = New-Object System.Collections.Generic.List[PSCustomobject]
 
     $mactable = (Invoke-RestMethod https://gitlab.com/wireshark/wireshark/-/raw/master/manuf) -replace '\t','|' |
-        ConvertFrom-Csv -Delimiter '|' -Header MAC,'VendorCode','Vendor' | where mac -notmatch '^[#]'
+        ConvertFrom-Csv -Delimiter '|' -Header MAC,'VendorCode','Vendor' | Where-Object mac -notmatch '^[#]'
     
     $arpcache = switch -Regex (arp -a){
         '^\s{1,}\d' {
