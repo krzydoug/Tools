@@ -8,12 +8,12 @@ Function Get-NetworkDevice {
 
         $prefix = $MAC -replace '-\w{2}-\w{2}-\w{2}$' -replace '-',':'
 
-        if($vendor = $maccache | where mac -match $prefix | select -ExpandProperty vendor)
+        if($vendor = $maccache | Where-Object mac -match $prefix | Select-Object -ExpandProperty vendor)
         {
             Write-Verbose "MAC/vendor found in cache"
             $vendor
         }
-        elseif($line = $mactable | where mac -match $prefix)
+        elseif($line = $mactable | Where-Object mac -match $prefix)
         {
             if(!$line.vendor){
                 Write-Verbose "vendor is null so replacing with vendorcode"
@@ -28,11 +28,6 @@ Function Get-NetworkDevice {
             "Unknown"
         }
     }
-
-    $template = @'
-      {IP*:1.2.3.4}          {MAC:a4-bb-6d-42-04-7e}     {Type:dynamic} 
-      {IP*:123.254.234.210}          {MAC:11-22-8e-c1-5b-96}     {Type:static}  
-'@
 
     $exclude = ('239','234','224' | ForEach-Object {"^$_"}) -join '|'
 
