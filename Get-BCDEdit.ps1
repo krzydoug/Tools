@@ -7,6 +7,7 @@ try{
     
     if(!$?){
         Write-Warning "BCD command failed. Are you running as admin?"
+        break
     }
 
     $result | ForEach-Object -Begin {$props = $null} -Process {
