@@ -96,7 +96,7 @@
 
                     $ht = $using:ht
                     $obj = New-Object System.Net.Sockets.TcpClient
-                    $ht[$using:_].$_ = ($false,$true)[$obj.ConnectAsync($Using:_, $_).Wait($using:time)]
+                    $ht[$using:_].$_ = ($false,$true)[$(try{$obj.ConnectAsync($Using:_, $_).Wait($using:time)}catch{})]
 
                 } -ThrottleLimit @($using:port).count
 
