@@ -83,7 +83,10 @@
             [int]$ThrottleLimit = 32
         )
 
-        begin{$syncedht = [HashTable]::Synchronized(@{})}
+        begin{
+            $ErrorActionPreference = 'Stop'
+            $syncedht = [HashTable]::Synchronized(@{})
+        }
 
         process{
             $ComputerName | ForEach-Object -Parallel {
