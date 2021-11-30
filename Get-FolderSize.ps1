@@ -1,5 +1,6 @@
 Function Get-FolderSize {
     [cmdletbinding()]
+    [OutputType([PSCustomObject])]
     Param(
         [Parameter(Mandatory,Position=0,ValueFromPipelineByPropertyName)]
         [ValidateScript({
