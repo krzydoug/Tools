@@ -20,7 +20,7 @@ function Get-ObjectClass{
 
     [CmdletBinding()]
     [Alias("goc")]
-    [OutputType([String[]])]
+    [OutputType([PSCustomObject[]])]
     Param
     (
         # Param1 help description
