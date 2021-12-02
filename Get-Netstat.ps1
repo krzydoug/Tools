@@ -1,5 +1,8 @@
 Function Get-Netstat {
-
+    [cmdletbinding()]
+    [outputtype([PSCustomObject[]])]
+    Param()
+    
     # https://www.reddit.com/r/PowerShell/comments/khiwjo/parsing_netstat_ano/
 
     $sb = {
