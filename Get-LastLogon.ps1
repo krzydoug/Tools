@@ -1,4 +1,4 @@
-Function Get-LastLogon (){
+Function Get-LastLogon {
     [cmdletbinding()]
 
     Param(
