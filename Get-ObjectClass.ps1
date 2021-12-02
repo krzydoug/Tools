@@ -42,25 +42,55 @@ function Get-ObjectClass{
     Process{
 
         foreach($id in $Identity){
-
-            $filter = switch -Regex ($currentuser){
-                '=' {'DistinguishedName';break}
-                '@' {'UserPrincipalName';break}
-                ' ' {'Name';break}
-                'S-\d' {'SID';break}
+            
+            $filter = switch -Regex ($id){
+                '=' {'DistinguishedName'}
+                '@' {'UserPrincipalName'}
+                ' ' {'Name'}
+                'S-\d|-\d{5,}|\d{5,}-' {'SID'}
                 default {'SamAccountName'}
             }
-
-            try{
-                $user = Get-ADUser -Filter "$filter -eq '$id'"
+        
+            $operator = if($id -match '(\*)'){
+                if($filter -eq 'SID' -and $id -ne $matches.1){
+                    Write-Warning "The '-like' operator for property 'SID' only seems to work with '*'."
+                    '-eq'
+                }
+                else{
+                    '-like'
+                }
             }
-            catch{
-                Write-Warning "Unable to find AD user $id"
-                break
+            else{
+                '-eq'
             }
 
-            (dsquery * $user.distinguishedname -scope base -attr objectclass |
-                select -Skip 1).trim() -split ';' | where {$_ -ne ''}
+            if($userlist = Get-ADUser -Filter "$filter $operator '$id'"){
+                Write-Verbose "Property '$filter' $operator '$id'"
+                
+                foreach($user in $userlist){
+                    Write-Verbose "Found AD user $($user.name)"
+                    
+                    try{
+                        $objectclass = [regex]::Matches($(
+                            dsquery * $user.distinguishedname -scope base -attr objectclass),
+                            '(\w+)(?=;)'
+                        ).Value
+                        
+                        if($objectclass){
+                            [PSCustomObject]@{
+                                ADUser = $user.samaccountname
+                                Class  = $objectclass
+                            }
+                        }
+                    }
+                    catch{
+                        Write-Warning "Error running dsquery: $($_.exception.message)"
+                    }
+                }
+            }
+            else{
+                Write-Verbose "Unable to find AD user with property '$filter' that is $operator '$id'"
+            }
         }
     }
 
