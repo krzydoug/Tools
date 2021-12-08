@@ -3,7 +3,7 @@ Function Set-UAC {
     Param(
         [ValidateSet('Never Notify','Always Notify','Sometimes Notify','Default')]
         [parameter(HelpMessage='UAC Level: Never Notify, Always Notify, Sometimes Notify, Default')]
-        $Level = 'Never Notify'
+        $Level = 'Default'
     )
     
     $ErrorActionPreference = 'Stop'
