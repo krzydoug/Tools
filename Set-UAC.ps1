@@ -48,7 +48,7 @@ Function Set-UAC {
                  Force = $true
             }
 
-	        Set-ItemProperty @params
+	    Set-ItemProperty @params
         }
     }
     catch{
