@@ -1,4 +1,4 @@
-﻿function Get-PowerPlan{
+function Get-PowerPlan{
     [cmdletbinding(DefaultParameterSetName='All')]
     Param(
         [parameter(Position=0,ParameterSetName='Guid')]
@@ -11,38 +11,30 @@
 
         [parameter(position=0,ParameterSetName='Active')]
         [switch]$Active
-
     )
    
     begin{
-        $powerplans = Powercfg /l | select -skip 3 | foreach{
-            $str = $_.trim().split(':')[1]
-            $G = $str.Trim().split()[0]
-            $str = $str.Replace($G,"").trim()
-            $A = $str -match ' \*'
-            if ($a){$str = $str.Replace(" *",'')}
-            $properties = @{
-                Name = $str
-                Guid = $G
-                Active = $A
+        $powerplans = switch -Regex (Powercfg /l){
+            ':\s(\S+)\s+\((.+)\)\s?(\*?)' {
+                [PSCustomObject]@{
+                    Name   = $matches[2]
+                    Guid   = $matches[1]
+                    Active = [bool]$matches[3]
+                }
             }
-            New-Object -TypeName psobject -Property $properties
         }
     }
+
     process{
-        if($name){
-            $powerplans | where name -like "*$name*"
-        }
-        elseif($guid){
-            $powerplans | where guid -like "*$Guid*"
-        }
-        elseif($active){
-            $powerplans | where active -eq 'true'
+        if($match = $PSBoundParameters.Keys -match '(name|guid|active)'){
+            Write-Verbose "$match -eq $($PSBoundParameters.$($match))"
+            $powerplans | Where-Object $match[0] -eq $PSBoundParameters.$($match)
         }
         else{
-            write-output $powerplans
+            $powerplans
         }
     }
+
     end{}
  
 }
