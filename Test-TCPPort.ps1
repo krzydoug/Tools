@@ -46,6 +46,31 @@
 
 
         .EXAMPLE
+        
+        PS> $params = @{
+            ComputerName  = (Get-ADComputer -Filter "enabled -eq '$true' -and operatingsystem -like '*server*'").name
+            Port          = 20,21,25,80,389,443,636,1311,1433,3268,3269
+            OutVariable   = 'results'
+        }
+
+        PS> [PSCustomObject]@{
+            'Total hosts'      = ($hosts = $params.ComputerName.count)
+            'Total ports'      = ($ports = $params.Port.count)
+            'Total tests'      = ($total = $hosts * $ports)
+            'Total seconds'    = ($seconds = (Measure-Command -Expression {Test-TCPPort @params | Out-GridView}).totalseconds)
+            'Tests per second' = $total / $seconds
+            'Total open ports' = $results.foreach{$_.psobject.members.where{$_.value -eq $true}}.count
+        }
+        
+        Total hosts      : 27
+        Total ports      : 11
+        Total tests      : 297
+        Total seconds    : 4.6290259
+        Tests per second : 64.1603668711381
+        Total open ports : 38
+        
+        
+        .EXAMPLE
 
         PS> Test-TCPPort -ComputerName google.com,bing.com,reddit.com -Port 80, 443, 25, 389 -Timeout 400
 
@@ -99,9 +124,14 @@
 
                     $ht = $using:ht
                     $obj = New-Object System.Net.Sockets.TcpClient
-                    $result = $false
-                    if($(try{$obj.ConnectAsync($Using:_, $_).Wait($using:time)}catch{})){$result = $true}
-                    $ht[$using:_].$_ = [bool]$result
+                    $result = try{
+                        $null = $obj.ConnectAsync($Using:_, $_).Wait($using:time)
+                        $true
+                    }
+                    catch{
+                        $false
+                    }
+                    $ht[$using:_].$_ = $result
 
                 } -ThrottleLimit @($using:port).count
 
