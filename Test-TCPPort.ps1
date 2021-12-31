@@ -125,8 +125,7 @@
                     $ht = $using:ht
                     $obj = New-Object System.Net.Sockets.TcpClient
                     try{
-                        $null = $obj.ConnectAsync($Using:_, $_).Wait($using:time)
-                        $result = if($?){
+                        $result = if($obj.ConnectAsync($Using:_, $_).Wait($using:time)){
                             $true
                         }
                         else{
@@ -136,6 +135,7 @@
                     catch{
                         $result = $false
                     }
+                    
                     $ht[$using:_].$_ = $result
 
                 } -ThrottleLimit @($using:port).count
