@@ -126,7 +126,7 @@
                     $obj = New-Object System.Net.Sockets.TcpClient
                     $result = try{
                         $null = $obj.ConnectAsync($Using:_, $_).Wait($using:time)
-                        if($!){
+                        if($?){
                             $true
                         }
                         else{
