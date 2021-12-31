@@ -124,9 +124,9 @@
 
                     $ht = $using:ht
                     $obj = New-Object System.Net.Sockets.TcpClient
-                    $result = try{
+                    try{
                         $null = $obj.ConnectAsync($Using:_, $_).Wait($using:time)
-                        if($?){
+                        $result = if($?){
                             $true
                         }
                         else{
@@ -134,7 +134,7 @@
                         }
                     }
                     catch{
-                        $false
+                        $result = $false
                     }
                     $ht[$using:_].$_ = $result
 
