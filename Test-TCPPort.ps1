@@ -101,7 +101,7 @@
                     $obj = New-Object System.Net.Sockets.TcpClient
                     $result = $false
                     if($(try{$obj.ConnectAsync($Using:_, $_).Wait($using:time)}catch{})){$result = $true}
-                    $ht[$using:_].$_ = $result
+                    $ht[$using:_].$_ = [bool]$result
 
                 } -ThrottleLimit @($using:port).count
 
