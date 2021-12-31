@@ -125,8 +125,13 @@
                     $ht = $using:ht
                     $obj = New-Object System.Net.Sockets.TcpClient
                     $result = try{
-                        $null = $obj.ConnectAsync($Using:_, $_).Wait($using:time)
-                        $true
+                        $porttest = $obj.ConnectAsync($Using:_, $_).Wait($using:time)
+                        if($porttest){
+                            $true
+                        }
+                        else{
+                            $false
+                        }
                     }
                     catch{
                         $false
