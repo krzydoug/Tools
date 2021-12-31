@@ -16,7 +16,7 @@
         Specifies the TCP port(s) to test
 
         .PARAMETER Timeout
-        Number of milliseconds before the connection should timeout (defaults to 1000)
+        Number of milliseconds before the connection should timeout (defaults to 2000)
 
         .PARAMETER ThrottleLimit
         Number of concurrent host threads (defaults to 32)
@@ -31,6 +31,7 @@
                 ComputerName  = (Get-ADComputer -Filter "enabled -eq '$true' -and operatingsystem -like '*server*'").name
                 Port          = 20,21,25,80,389,443,636,1311,1433,3268,3269
                 OutVariable   = 'results'
+                Timeout       = 1000
             }
 
         PS> Test-TCPPort @params | Out-GridView
@@ -38,7 +39,7 @@
 
         .EXAMPLE
 
-        PS> Test-TCPPort -ComputerName www.google.com -Port 80, 443
+        PS> Test-TCPPort -ComputerName www.google.com -Port 80, 443 -Timeout 600
 
         ComputerName     80  443
         ------------     --  ---
@@ -51,6 +52,7 @@
             ComputerName  = (Get-ADComputer -Filter "enabled -eq '$true' -and operatingsystem -like '*server*'").name
             Port          = 20,21,25,80,389,443,636,1311,1433,3268,3269
             OutVariable   = 'results'
+            ThrottleLimit = 150
         }
 
         PS> [PSCustomObject]@{
@@ -103,7 +105,7 @@
 
             [string[]]$Port,
 
-            [int]$Timeout = 1000,
+            [int]$Timeout = 2000,
 
             [int]$ThrottleLimit = 32
         )
