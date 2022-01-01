@@ -138,7 +138,7 @@
                     catch{
                     }
                     
-                    $ht[$using:_].$_ = if($result -eq ''){$false}else{[bool]($result)}
+                    $ht[$using:_].$_ = if('' -eq $result -or $null -eq $result){$false}else{[bool]($result)}
 
                 } -ThrottleLimit @($using:port).count
 
