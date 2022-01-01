@@ -59,10 +59,12 @@
             'Total hosts'      = ($hosts = $params.ComputerName.count)
             'Total ports'      = ($ports = $params.Port.count)
             'Total tests'      = ($total = $hosts * $ports)
-            'Total seconds'    = ($seconds = (Measure-Command -Expression {Test-TCPPort @params | Out-GridView}).totalseconds)
+            'Total seconds'    = ($seconds = (Measure-Command -Expression {Test-TCPPort @params}).totalseconds)
             'Tests per second' = $total / $seconds
             'Total open ports' = $results.foreach{$_.psobject.members.where{$_.value -eq $true}}.count
         }
+
+        PS> $results | Out-GridView
         
         Total hosts      : 27
         Total ports      : 11
@@ -123,6 +125,8 @@
                 $time = $using:Timeout
 
                 $using:port | ForEach-Object -Parallel {
+                
+                    $result = $false
 
                     $ht = $using:ht
                     $obj = New-Object System.Net.Sockets.TcpClient
@@ -130,15 +134,11 @@
                         $result = if($obj.ConnectAsync($Using:_, $_).Wait($using:time)){
                             $true
                         }
-                        else{
-                            $false
-                        }
                     }
                     catch{
-                        $result = $false
                     }
                     
-                    $ht[$using:_].$_ = $result
+                    $ht[$using:_].$_ = if($result -eq ''){$false}else{[bool]($result)}
 
                 } -ThrottleLimit @($using:port).count
 
