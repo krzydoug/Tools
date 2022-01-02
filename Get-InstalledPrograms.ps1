@@ -1,131 +1,91 @@
-Function Get-InstalledPrograms{
-    <#
-.Synopsis
-Get a list of installed programs from local or remote computers.
- 
-.DESCRIPTION
-Get a list of installed programs from local or remote computers. Will pull list from both 32 and 64bit hives (not a complete and accurate list)
-
-.NOTES   
-Name: Get-InstalledPrograms.ps1
-Author: Doug Maurer
-Version: 2.0.0.1
-DateCreated: 2018-11-22
-DateUpdated: 2020-08-08
-
-.LINK
-
-.INPUTS
-String
-
-.OUTPUTS
-pscustomobject
-
-.EXAMPLE   
-get-adcomputer -filter * | Get-InstalledPrograms -OutVariable results
-Description 
------------     
-Attempts to get a list of installed programs from all AD Computers and store output in $results variable
-
-.EXAMPLE   
-get-content c:\servers.txt | Get-InstalledPrograms
-Description 
------------     
-Attempts to get a list of installed programs from all computers in servers.txt
-
-.EXAMPLE   
-$programs = 'server1','server2','wks1' | Get-InstalledPrograms
-
-.EXAMPLE   
-Get-InstalledPrograms -name 'server1','server2','wks1' | tee-object -variable results
- 
-#>
+﻿Function Get-InstalledPrograms {
     [cmdletbinding()]
     Param(
-        [alias("CN","ComputerName","HostName","Computer")]
-        [parameter(ValuefromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
-        [String[]]$Name
+        $Computername = $env:COMPUTERNAME,
+        $Name = '*'
+    )
+
+    Write-Verbose "Gathering programs on $computername"
+
+    Invoke-Command $computername {
+        Param(
+            $name
         )
 
-    begin{}
-    process{
-        if(-not $Name){$Name = $env:COMPUTERNAME}
-            FOREACH ($PC in $Name) {
-            $computername=$PC
+        Function Get-InstalledPrograms{
+            [cmdletbinding()]
+            Param([alias("CN","ComputerName","HostName","Computer")][parameter(ValuefromPipeline=$true,ValueFromPipelineByPropertyName=$true)]$Name)
+
+            begin{}
+            process{
+                if(-not $Name){$Name = $env:COMPUTERNAME}
+                    FOREACH ($PC in $Name) {
+                    $computername=$PC
  
-            # Branch of the Registry  
-            $Branch='LocalMachine'
-            0..1 | foreach {
-                try{
-                    $regservice = Get-Service -Name RemoteRegistry -ComputerName $computername -ErrorAction Stop
-                }catch{
-                    if($_ -eq 2){
-                        Write-Warning "Unable to query remoteregistry on $PC"
-                        break
+                    # Branch of the Registry  
+                    $Branch='LocalMachine'
+                    0..1 | ForEach-Object {
+                        try{
+                            $regservice = Get-Service -Name RemoteRegistry -ComputerName $pc -ErrorAction Stop
+                        }catch{
+                            if($_ -eq 2){
+                                Write-Warning "Unable to query remoteregistry on $PC"
+                                break
+                            }
+                        }
                     }
-                }
-            }
-            $tracker = New-Object System.Collections.ArrayList
-            try{
-                if($regservice.StartType -eq 'disabled'){
-                    Set-Service -InputObject $regservice -StartupType Manual -ErrorAction stop
-                    $servicedisabled = $true
-                }
-                if($regservice.Status -ne 'running'){
-                    Start-Service -InputObject $regservice -ErrorAction SilentlyContinue
-                    $servicestarted = $true
-                    Start-Sleep -Seconds 2
-                }
-            }catch{
-                write-warning "Unable to reach remote registry service on $PC";break
-            }
-            
-            if((Get-Service -Name RemoteRegistry -ComputerName $computername -EA SilentlyContinue).status -ne 'running'){
-                write-warning "Unable to reach remote registry service on $PC"
-                break
-            }
-            
-            $SubBranch="SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"   
-            @{View=512;Bit='32-Bit'},@{View=256;Bit='64-Bit'} | foreach{
-                $registry= [microsoft.win32.registrykey]::OpenremoteBaseKey($Branch,$PC,$_.view)
-                $registrykey=$registry.OpenSubKey($Subbranch)
-                $subkeys = $registrykey.GetSubKeyNames()
-                Foreach ($key in $subkeys)  
-                {
-                    if($key -in $tracker.key){continue}
-                    [void]$tracker.Add(@{Key=$key})
-                    $NewSubKey=$SubBranch+"\\"+$key
-                    $Readkey=$registry.OpenSubKey($NewSubKey)
+                    $tracker = New-Object System.Collections.ArrayList
                     try{
-                        $Displayname     = $Readkey.GetValue("DisplayName")
-                        $Version         = $readkey.GetValue("DisplayVersion")
-                        $Publisher       = $readkey.GetValue("Publisher")
-                        $InstallDate     = [datetime]::ParseExact($readkey.GetValue("InstallDate"),'yyyyMMdd',$null)
-                        $InstallLocation = $readkey.GetValue("InstallLocation")
-                        $UninstallString = $readkey.GetValue("UninstallString")
+                        if($regservice.StartType -eq 'disabled'){Set-Service -InputObject $regservice -StartupType Manual -ErrorAction stop;$servicedisabled = $true}
+                        if($regservice.Status -ne 'running'){Start-Service -InputObject $regservice  -ErrorAction SilentlyContinue;$servicestarted = $true;Start-Sleep -Seconds 2}
+                    }catch{
+                        write-warning "Unable to reach remote registry service on $PC";break
                     }
-                    catch{}
-                    [PSCustomObject]@{
-                        PC              = $PC
-                        Displayname     = $displayname
-                        Version         = $Version
-                        Publisher       = $Publisher
-                        InstallDate     = $InstallDate 
-                        Architecture    = $_.bit
-                        Subkey          = $key
-                        InstallLocation = $InstallLocation
-                        UninstallString = $UninstallString
+
+                    if((Get-Service -Name RemoteRegistry -ComputerName $computername -ErrorAction SilentlyContinue).status -ne 'running'){write-warning "Unable to reach remote registry service on $PC";break}
+                    $SubBranch="SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"   
+                    @{View=512;Bit='32-Bit'},@{View=256;Bit='64-Bit'} | ForEach-Object{
+                        $registry= [microsoft.win32.registrykey]::OpenremoteBaseKey($Branch,$PC,$_.view)
+                        $registrykey=$registry.OpenSubKey($Subbranch)
+                        $subkeys = $registrykey.GetSubKeyNames()
+                        Foreach ($key in $subkeys)  
+                        {
+                            if($key -in $tracker.key){continue}
+                            [void]$tracker.Add(@{Key=$key})
+                            $NewSubKey = $SubBranch+"\\"+$key
+                            $Readkey = $registry.OpenSubKey($NewSubKey)
+                            try{
+                            $Displayname = $Readkey.GetValue("DisplayName")
+                            $Installdate = $readkey.GetValue("InstallDate")
+                            $InstallLocation = $Readkey.GetValue("InstallLocation")
+                            $DisplayVersion = $Readkey.GetValue("DisplayVersion")
+                            $UninstallString = $readkey.GetValue("UninstallString")
+                            }
+                            catch{}
+                            $properties = [ordered]@{
+                                PC = $PC
+                                Displayname = $displayname
+                                Version = $DisplayVersion
+                                Architecture = $_.bit
+                                Installed = $Installdate
+                                InstallPath = $InstallLocation
+                                UninstallString = $UninstallString
+                                Subkey= $key
+                        }
+                        $obj = New-Object -TypeName PSObject -Property $properties
+                        write-output $obj
+                        }
                     }
+
+                    if($servicedisabled){Set-Service -InputObject $regservice -StartupType Disabled}
+                    if($servicestarted){Stop-Service -InputObject $regservice -ErrorAction SilentlyContinue}
+            
                 }
             }
-
-            if($registrykey){$registrykey.close()}
-            if($registry){$registry.close()}
-            if($servicedisabled){Set-Service -InputObject $regservice -StartupType Disabled}
-            if($servicestarted){Stop-Service -InputObject $regservice -ErrorAction SilentlyContinue}
-
-        }
-    }
-    end{}
+            end{}
     
+        }
+
+        Get-InstalledPrograms | Where-Object displayname -like "*$name*"
+    } -ThrottleLimit 300 -ErrorAction SilentlyContinue -ErrorVariable errs -ArgumentList $name
 }
