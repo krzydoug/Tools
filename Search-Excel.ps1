@@ -1,24 +1,41 @@
 Function Search-Excel {
-    <#
-        .SYNOPSIS
-        Search for specific text/pattern inside excel files.
+<#
+    .SYNOPSIS
+    Search for specific text/pattern inside excel files.
 
-        .DESCRIPTION
-        Search for specific text/pattern inside excel files.
+    .DESCRIPTION
+    Search for specific text/pattern inside excel files.
 
-        .EXAMPLE
-        $SourceLocation = "C:\Some\Folder"
-        $SearchText = "???-??-????"
-        Get-ChildItem -Path $SourceLocation -Recurse -Include *.xlsx | Search-Excel -SearchText $SearchText -OutVariable results
-
-        .NOTES
-        The search does not appear to be regex based, so just wildcards * and ? that I know of. 
-    #>
+    .EXAMPLE
+    $SourceLocation = "C:\Some\Folder"
+    $SearchText = "???-??-????"
+    Get-ChildItem -Path $SourceLocation -Recurse -Include *.xlsx | Search-Excel -SearchText $SearchText -OutVariable results
     
+    .EXAMPLE
+    $params = @{
+        FileName    = (Get-ChildItem -Path 'c:\temp\*' -Include *.xlsx).FullName
+        SearchText  = '???-??-????'
+        OutVariable = 'results'
+    }
+    
+    .EXAMPLE
+    $params = [PSCustomObject]@{
+        FileName    = (Get-ChildItem -Path 'c:\temp\' -Filter *.xlsx -Recurse).FullName
+        SearchText  = '???-??-????'
+        OutVariable = 'results'
+    }
+
+    $params | Search-Excel
+
+Search-Excel @params
+
+    .NOTES
+    The search does not appear to be regex based, so just wildcards * and ? that I know of. 
+#>
     [cmdletbinding()]
     Param(
         [parameter(Mandatory,ValueFromPipeline,ValueFromPipelineByPropertyName)]
-        [alias('Path','FullName','FullPath')]
+        [alias('Path','FullName','FulllPath')]
         [string[]]$FileName,
         
         [parameter(Mandatory,ValueFromPipelineByPropertyName)]
@@ -40,8 +57,7 @@ Function Search-Excel {
                 Write-Warning $_.exception.message
                 continue
             }
-            
-            foreach ($Worksheet in @($Workbook.Sheets)) {
+            ForEach ($Worksheet in @($Workbook.Sheets)) {
                 try{
                     $Found = $WorkSheet.Cells.Find($SearchText)
                 }
@@ -52,15 +68,13 @@ Function Search-Excel {
 
                 If ($Found) {
                     $BeginAddress = $Found.Address(0,0,1,1)
-                    
                     [pscustomobject]@{
                         WorkSheet = $Worksheet.Name
-                        Column = $Found.Column
-                        Row =$Found.Row
-                        Text = $Found.Text
-                        Address = $File
+                        Column    = $Found.Column
+                        Row       = $Found.Row
+                        Text      = $Found.Text
+                        Address   = $File
                     }
-                    
                     Do {
                         try{
                             $Found = $WorkSheet.Cells.FindNext($Found)
@@ -69,17 +83,15 @@ Function Search-Excel {
                             Write-Warning $_.exception.message
                         }
                         $Address = $Found.Address(0,0,1,1)
-                        
                         If ($Address -eq $BeginAddress) {
                             break
                         }
-                        
                         [pscustomobject]@{
                             WorkSheet = $Worksheet.Name
-                            Column = $Found.Column
-                            Row =$Found.Row
-                            Text = $Found.Text
-                            Address = $File
+                            Column    = $Found.Column
+                            Row       = $Found.Row
+                            Text      = $Found.Text
+                            Address   = $File
                         }                 
                     } Until ($False)
                 }
