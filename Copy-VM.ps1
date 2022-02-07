@@ -29,6 +29,24 @@ function Copy-VM {
         Enter the name for the new VM: test
 
         This example shows interactive prompts from running Copy-VM alone
+    .EXAMPLE
+        PS C:\> $params = @{
+            VMHost     = '172.27.14.222'
+            Verbose    = $true
+            SourceVM   = 'WIN19SVR-STD-TEMPLATE'
+            Credential = Get-Credential root
+        }
+        
+        PS C:\> $csv = @'
+        Name
+        NewVM1
+        NewVM2
+        NewVM3
+        '@
+        
+        PS C:\> $csv | ConvertFrom-Csv | Copy-VM @params
+
+        This example shows providing the required arguments via hashtable using splatting.
     .INPUTS
         String
     .OUTPUTS
@@ -45,7 +63,7 @@ function Copy-VM {
 
         [pscredential]$Credential,
 
-        [parameter(ValueFromPipelineByPropertyName)]
+        [parameter(ValueFromPipeline,ValueFromPipelineByPropertyName)]
         [string]$Name,
 
         [parameter(ValueFromPipelineByPropertyName)]
