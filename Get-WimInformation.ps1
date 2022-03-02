@@ -11,7 +11,7 @@ Function Get-WimInformation {
     .EXAMPLE
         PS C:\> Get-ChildItem E:\Mount -Filter *.wim | Get-WimInformation
     .INPUTS
-        string
+        string, fileinfo
     .NOTES
         https://forums.powershell.org/t/using-select-object-correctly/18715
         https://github.com/krzydoug/Tools/blob/master/Get-WimInformation.ps1
