@@ -2,11 +2,9 @@
         <#
 
         .SYNOPSIS
-
         Test one or more TCP ports against one or more hosts
 
         .DESCRIPTION
-
         Test for open port(s) on one or more hosts
 
         .PARAMETER ComputerName
@@ -130,15 +128,15 @@
 
                     $ht = $using:ht
                     $obj = New-Object System.Net.Sockets.TcpClient
+                    $ht[$using:_].$_ = $false
+                    
                     try{
-                        $result = if($obj.ConnectAsync($Using:_, $_).Wait($using:time)){
-                            $true
+                        if($obj.ConnectAsync($Using:_, $_).Wait($using:time)){
+                            $ht[$using:_].$_ = $true
                         }
                     }
                     catch{
                     }
-                    
-                    $ht[$using:_].$_ = if('' -eq $result -or $null -eq $result){$false}else{[bool]($result)}
 
                 } -ThrottleLimit @($using:port).count
 
