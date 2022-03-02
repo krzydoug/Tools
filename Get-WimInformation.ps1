@@ -14,6 +14,7 @@ Function Get-WimInformation {
         string
     .NOTES
         https://forums.powershell.org/t/using-select-object-correctly/18715
+        https://github.com/krzydoug/Tools/blob/master/Get-WimInformation.ps1
     #>
 
     [cmdletbinding()]
@@ -26,6 +27,7 @@ Function Get-WimInformation {
     begin{
         $dism = Get-ChildItem C:\Windows\System32 -Filter dism.exe | Select-Object -ExpandProperty FullName
     }
+
     process{
         switch -Regex (&$dism /Get-WimInfo /WimFile:$Path){
             
@@ -44,7 +46,7 @@ Function Get-WimInformation {
             }
 
             'Size : (.+) bytes$' {
-                $obj.Size = "{0:N2} GB" -f ($Matches.1 / 1GB)
+                $obj.Size = "{0:N2} GB" -f ([decimal]$Matches.1 / 1GB)
                 [PSCustomObject]$obj
                 'Index','Name','Description','Size' | ForEach-Object {$obj.$_ = ''}
             }
