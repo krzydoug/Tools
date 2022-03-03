@@ -46,7 +46,7 @@ Function Get-WimInformation {
             }
 
             'Size : (.+) bytes$' {
-                $obj.Size = "{0:N2} GB" -f ([decimal]$Matches.1 / 1GB)
+                $obj.Size = "{0:N2} GB" -f ([decimal]($matches.1 -replace '\.|,') / 1GB)
                 [PSCustomObject]$obj
                 'Index','Name','Description','Size' | ForEach-Object {$obj.$_ = ''}
             }
