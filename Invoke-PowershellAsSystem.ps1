@@ -23,6 +23,6 @@ function Invoke-PowershellAsSystem {
         Invoke-WebRequest https://live.sysinternals.com/tools/psexec.exe -OutFile c:\temp\psexec.exe
     }
 
-    Start-Process -FilePath $psexec -ArgumentList "/s /i $($exe[$Edition]) /accepteula"
+    $null = cmd /c "$psexec /s /i $($exe[$Edition]) /accepteula /nobanner" 2>&1
 
 }
