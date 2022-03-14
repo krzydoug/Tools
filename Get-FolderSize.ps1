@@ -28,11 +28,25 @@ Function Get-FolderSize {
         #    /NFL :: No File List - don't log file names.
         #    /NDL :: No Directory List - don't log directory names.
         #    /NP :: No Progress - don't display percentage copied.
+        
+        Function Get-FriendlySize {
+            [cmdletbinding()]
+            Param($bytes)
+
+            switch($bytes){
+                {$_ -gt 1PB}{"{0:N2} PB" -f ($_ / 1PB);break}
+                {$_ -gt 1TB}{"{0:N2} TB" -f ($_ / 1TB);break}
+                {$_ -gt 1GB}{"{0:N2} GB" -f ($_ / 1GB);break}
+                {$_ -gt 1MB}{"{0:N2} MB" -f ($_ / 1MB);break}
+                {$_ -gt 1KB}{"{0:N2} KB" -f ($_ / 1KB);break}
+                default {"{0:N2} Bytes" -f $_}
+            }
+        }
     }
 
     process {
-
-        $RC_Results = robocopy $FullName 'NULL' /L /E /NP /NFL /NDL
+        
+        $RC_Results = robocopy $FullName.TrimEnd('\') 'NULL' /L /E /NP /NFL /NDL
    
         $dirs,$files,$size = switch -Regex ($RC_Results | Select-Object -Last 6){
             '(Ended|Times)\s:\s(.+)' {break}
@@ -44,13 +58,12 @@ Function Get-FolderSize {
         [PSCustomObject] @{
             DirCount  = "{0}" -f $dirs
             FileCount = "{0}" -f $files
-            TotalSize = "{0:N2}" -f $(if($size -match '\D$'){
-                $formattedsize = $size -replace '\D$',"$($matches.0)B"
-                Invoke-Expression $formattedsize
+            TotalSize = Get-FriendlySize $($(if($size -match '\D$'){
+                $size -replace '\D$',"$($matches.0)B" | Invoke-Expression
             }
             else{
                 $size
-            }) -as [decimal]
+            }) -as [decimal])
             DirPath   = $FullName
         }
     }
