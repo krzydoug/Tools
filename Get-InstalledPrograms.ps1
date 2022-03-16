@@ -1,4 +1,4 @@
-﻿Function Get-InstalledPrograms {
+Function Get-InstalledPrograms {
     [cmdletbinding()]
     Param(
         $Computername = $env:COMPUTERNAME,
