@@ -54,12 +54,12 @@ function Get-WifiProfile {
             Write-Verbose "Processing network $network"
             $ht = [ordered]@{}
             
-            # match only the lines that may have values
+            # Match only the lines that may have values
             (& $command) -match " : .+" | ForEach-Object{
                 # , is the array operator to send the result of the split as an array instead of one at a time
                 ,($_.Trim() -split '\s+:\s+') | ForEach-Object{
 
-                    # to maintain the order of properties when $ShowKey is not called add the obfuscated password or N/A right after 'Security Key'
+                    # To maintain the order of properties when $ShowKey is not called add the obfuscated password or N/A right after 'Security Key'
                     if($_[0] -eq 'Security Key' -and -not $ShowKey){
                         $ht.'Key Content' = if($_[1] -eq 'present'){
                             # Password is present and $ShowKey not called so replace password with 6 to 10 asterisks
