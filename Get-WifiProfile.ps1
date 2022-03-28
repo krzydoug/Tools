@@ -6,11 +6,11 @@ function Get-WifiProfile {
         Function to pull stored wifi profiles and security keys. Running the function with no parameters will
         show all stored wifi profiles with any stored security keys obfuscated. 
     .EXAMPLE
-        PS C:\> <example usage>
-        Explanation of what the example does
+        PS C:\> Get-WifiProfile 'Hilton'
+        Gets all wifi profiles that contain the word Hilton with passwords obfuscated
     .EXAMPLE
-        PS C:\> <example usage>
-        Explanation of what the example does
+        PS C:\> Get-WifiProfile 'Hilton' -ShowKey
+        Gets all wifi profiles that contain the word Hilton with passwords in plain text
     .PARAMETER Name
         Partial or full name of a wifi network
     .PARAMETER Showkey
