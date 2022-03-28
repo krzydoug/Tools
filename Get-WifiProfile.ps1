@@ -17,7 +17,7 @@ function Get-WifiProfile {
         Switch to choose showing security key in plain text. 
     .NOTES
         https://www.reddit.com/r/PowerShell/comments/tnzyxw/showwifipasswords/
-        
+        https://github.com/krzydoug/Tools/blob/master/Get-WifiProfile.ps1
     #>
 
     [CmdletBinding()]
@@ -78,4 +78,4 @@ function Get-WifiProfile {
     end {
         
     }
-}sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
+}
