@@ -1,11 +1,11 @@
-function Get-SSLCertificate {
+function Get-SslCertificate {
     <#
     .SYNOPSIS
         Retrieve SSL certificate
     .DESCRIPTION
         Retrieve SSL cert from HTTPS site
     .EXAMPLE
-        PS C:\> Get-SSLCertificate -Url https://www.microsoft.com
+        PS C:\> Get-SslCertificate -Url https://www.microsoft.com
 
         Name       : C=US, S=WA, L=Redmond, O=Microsoft Corporation, OU=Microsoft Corporation, CN=www.microsoft.com
         Subject    : CN=www.microsoft.com, OU=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=WA, C=US
