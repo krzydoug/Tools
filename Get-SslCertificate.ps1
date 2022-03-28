@@ -14,7 +14,7 @@ function Get-SslCertificate {
         Expiration : 7/28/2022 4:22:06 PM
         Thumbprint : B5BC7B1FD96BE16E49CB61354824CF4259A2BE75
     .EXAMPLE
-        PS C:\> 'msn.com','google.com'|Get-SslCertificate
+        PS C:\> 'msn.com','google.com' | Get-SslCertificate
 
         Url        : https://msn.com
         Name       : CN=*.msn.com
