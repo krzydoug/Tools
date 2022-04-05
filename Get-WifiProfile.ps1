@@ -31,7 +31,16 @@ function Get-WifiProfile {
     
     begin {
         # Start by getting a list of all existing profiles
-        $networklist = (netsh wlan show profiles) -match ' :'  -replace '.+: '
+        $profiles = netsh wlan show profiles
+
+        # Check if wlansvc is not running
+        if($profiles -match 'wlansvc.+is not running'){
+            Write-Warning $profiles
+            break
+        }
+        else{
+            $networklist = @($profiles) -match ' :'  -replace '.+: '
+        }
         
         # Store command as a scriptblock. If $ShowKey is present then key=clear will be added to the command
         # Issue encountered with SSID that include single quote. Replace single quote with asterisk in profile lookup
@@ -39,6 +48,10 @@ function Get-WifiProfile {
     }
     
     process {
+        if(-not ($networklist)){
+            break
+        }
+
         $lookuplist = if($Name){
             # Concantonate all names as a regex or pattern (if only one value no pipe is appended)
             $regexlist = $Name -join '|'
