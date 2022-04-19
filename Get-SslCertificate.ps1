@@ -130,7 +130,7 @@ function Get-SslCertificate {
                 powershell.exe -nologo -noprofile -executionpolicy bypass -command $script -args $site,$timeout
             }
             else{
-                . $script $site 10000
+                . $script $site $timeout
             }
         }
     }
