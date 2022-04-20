@@ -43,7 +43,7 @@ function Expand-ZipFile {
     Author:  Mike F Robbins
     Website: http://mikefrobbins.com
     Twitter: @mikefrobbins
-    https://mikefrobbins.com/2013/08/15/powershell-function-to-Expand-ZipFiles-using-the-net-framework-4-5-with-fallback-to-com/
+    https://mikefrobbins.com/2013/08/15/powershell-function-to-unzip-files-using-the-net-framework-4-5-with-fallback-to-com/
     #>
 
     [CmdletBinding()]
