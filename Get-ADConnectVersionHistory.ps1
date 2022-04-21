@@ -22,7 +22,7 @@ function Get-ADConnectVersionHistory {
                 }
 
                 Changes = if($items -match '(?s)(?<func>ional-changes.+</p?)(.+?<h3|ul)'){
-                    [regex]::Matches($Matches.func,'(?s)(?<=<(li|p)>).+?(?=</(li|p))').value -replace '<p>'
+                    [regex]::Matches($Matches.func,'(?s)(?<=<(li|p)>).+?(?=</(li|p))').value -replace '</?(p|li|ul)>'
                 }
                 else{
                     'No functional changes'
