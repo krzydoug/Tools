@@ -47,7 +47,7 @@ Function Get-FileMetaData {
     
     process
     {
-        foreach($singlepath in Get-Item -LiteralPath "$fullname")
+        foreach($singlepath in $fullname | Get-Item)
         {
             If($singlepath -is [System.IO.FileInfo])
             {
