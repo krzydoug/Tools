@@ -2,7 +2,7 @@ Function Get-InstalledPrograms {
     [cmdletbinding()]
     Param(
         $Computername,
-        [string[]]$Name = '*'
+        [string[]]$Name = ''
     )
 
     Write-Verbose "Gathering programs on $computername"
