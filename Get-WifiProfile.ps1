@@ -45,6 +45,14 @@ function Get-WifiProfile {
         # Store command as a scriptblock. If $ShowKey is present then key=clear will be added to the command
         # Issue encountered with SSID that include single quote. Replace single quote with asterisk in profile lookup
         $command = {netsh wlan show profiles $($network -replace "'",'*') ('','key=clear')[$ShowKey.IsPresent]}
+
+        $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+        $iselevated = $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+        if($ShowKey -and -not $iselevated){
+            Write-Warning "'Run as Administrator' is required to decipher security keys"
+            $ShowKey = $false
+        }
     }
     
     process {
