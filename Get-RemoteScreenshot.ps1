@@ -1,4 +1,4 @@
-﻿function Get-RemoteScreenshot
+function Get-RemoteScreenshot
 {
 <#
 
