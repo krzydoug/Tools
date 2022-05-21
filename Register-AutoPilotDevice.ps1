@@ -60,9 +60,9 @@ Install-Script -name Get-WindowsAutopilotInfo -Force -Scope CurrentUser
 
 try{
     Get-WindowsAutoPilotInfo @params
-     Write-Host "Device has been added to AutoPilot.`nPlease close the console window and continue with sign in/enrollment." -ForeGroundColor Green
-     Pause
-     Exit 0
+    Write-Host "Device has been added to AutoPilot.`nPlease close the console window and continue with sign in/enrollment." -ForeGroundColor Green
+    Pause
+    Exit 0
 }
 catch{
     Write-Warning $_.Exception.Message
