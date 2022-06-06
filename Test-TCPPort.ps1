@@ -103,6 +103,7 @@
         Param(
             [string[]]$ComputerName,
 
+            [validaterange(1,65535)]
             [string[]]$Port,
 
             [int]$Timeout = 2000,
