@@ -28,7 +28,7 @@ Function Get-Netstat {
         }
         'UDP' {
             , -split $_ | ForEach-Object {
-                $sb.Invoke($_[0],$_[3],'Stateless')
+                $sb.Invoke($_[0],$_[3],'STATELESS')
             }
         }
     }
