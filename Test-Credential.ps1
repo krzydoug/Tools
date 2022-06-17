@@ -28,7 +28,7 @@ function Test-Credential {
                 try{
                     Write-Verbose "Looking up information for domain $Domain"
                     $ldapFilter = "(&(objectCategory=computer)(userAccountControl:1.2.840.113556.1.4.803:=8192))"
-                    $dn = ($Domain -split '\.'|%{"DC=$_"}) -join ','
+                    $dn = ($Domain -split '\.'|ForEach-Object{"DC=$_"}) -join ','
                     $server = [system.net.dns]::GetHostEntry($Domain).addresslist.ipaddresstostring | Select-Object -First 1
                 
                     if(-not $server){
