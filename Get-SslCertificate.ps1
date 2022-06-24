@@ -67,6 +67,8 @@ function Get-SslCertificate {
 
             try{
                 $req = [Net.HttpWebRequest]::Create($site)
+                $req.Headers["UserAgent"] = [Microsoft.PowerShell.Commands.PSUserAgent]::Chrome
+                $req.AllowAutoRedirect = $false
             }
             catch{
                 Write-Warning $_.Exception.Message
@@ -104,16 +106,11 @@ function Get-SslCertificate {
             [int]$certExpiresIn = ($certExpDate - (get-date)).Days
         
             if ($certExpiresIn -lt $minCertAge){
-                if($certExpiresIn -lt 0){
-                    Write-Host "EXPIRED: The certificate for $site expired $($certExpiresIn * -1) days ago" -ForegroundColor Red
-                }
-                else{
-                    Write-Warning "The certificate for $site expires in $certExpiresIn days"
-                }
+                Write-Warning "The $site certificate expires in $certExpiresIn days"
             }
         
             [PSCustomObject]@{
-                Url        = $site
+                URL        = $site
                 Name       = $req.ServicePoint.Certificate.GetName()
                 Subject    = $req.ServicePoint.Certificate.subject
                 Issuer     = $req.ServicePoint.Certificate.GetIssuerName()
@@ -130,7 +127,7 @@ function Get-SslCertificate {
                 powershell.exe -nologo -noprofile -executionpolicy bypass -command $script -args $site,$timeout
             }
             else{
-                . $script $site $timeout
+                . $script $site 10000
             }
         }
     }
