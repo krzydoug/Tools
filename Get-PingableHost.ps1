@@ -11,7 +11,7 @@ function Get-PingableHost{
     .NOTES   
     Name: Get-PingableHost.ps1
     Author: Doug Maurer
-    Version: 2.0.1.1
+    Version: 2.0.1.2
     DateCreated: 2016-11-22
     DateUpdated: 2022-07-01
 
@@ -154,9 +154,15 @@ function Get-PingableHost{
         
         foreach($task in $tasklist){
             if($task.task.result.status -eq 'Success'){
-                $task.Task.result | Select @{n='ComputerName';e={$task.ComputerName}},
-                                           Status, Address, RoundTripTime,
-                                           @{n='TotalSeconds';e={"{0:N4}" -f $task.timer.Elapsed.TotalSeconds}} -OutVariable +results
+                $task.Task.result | ForEach-Object{
+		    [PSCustomObject]@{
+                        ComputerName  = $task.ComputerName
+                        Status        = $_.Status
+                        IPAddress     = $_.Address.IPAddressToString
+                        RoundTripTime = $_.RoundTripTime
+                        TotalSeconds  = "{0:N4}" -f $task.timer.Elapsed.TotalSeconds
+	            }
+                } -OutVariable +results
             }
 
             if($Force -and $null -eq $task.task.result){
