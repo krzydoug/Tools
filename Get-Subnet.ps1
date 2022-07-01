@@ -75,15 +75,18 @@ Function Get-Subnet {
             ([math]::truncate($int % 256)).tostring() )
         }
 
-        function Get-DefaultMask ($IP) {
-            $Class = Switch ($IP.Split('.')[0]){
+        function Get-Class ($IP) {
+            switch ($IP.Split('.')[0]){
                 { $_ -in 0..127 } { 'A' }
                 { $_ -in 128..191 } { 'B' }
                 { $_ -in 192..223 } { 'C' }
                 { $_ -in 224..239 } { 'D' }
                 { $_ -in 240..255 } { 'E' }
-            
             }
+        }
+
+        function Get-DefaultMask ($IP) {
+            $Class = Get-Class $IP
 
             Write-Verbose "Class: $Class"
 
@@ -98,6 +101,11 @@ Function Get-Subnet {
 
             $Mask
         }
+
+        $defaultDisplaySet = 'NetworkAddress','SubnetMask','BroadcastAddress','HostAddressCount'
+
+        $defaultDisplayPropertySet = New-Object System.Management.Automation.PSPropertySet(‘DefaultDisplayPropertySet’,[string[]]$defaultDisplaySet)
+        $PSStandardMembers = [System.Management.Automation.PSMemberInfo[]]@($defaultDisplayPropertySet)
 
         $results = [ordered]@{}
     }
@@ -171,12 +179,15 @@ Function Get-Subnet {
                 NetworkAddress   = $NetworkAddr
                 BroadcastAddress = $broadcastaddr
                 SubnetMask       = $MaskAddr
-                NetworkClass     = $Class
+                NetworkClass     = Get-Class $address.IPAddress
                 Range            = "$networkaddr ~ $broadcastaddr"
                 HostAddresses    = $HostAddresses
                 HostAddressCount = $HostAddressCount
             }
-            
+
+            $current.PSObject.TypeNames.Insert(0,'System.Net.NetworkInformation')
+            $current | Add-Member MemberSet PSStandardMembers $PSStandardMembers
+
             if($results["$NetworkAddr-$mask"]){
                 $results["$NetworkAddr-$mask"].IPAddress = $results["$NetworkAddr-$mask"].IPAddress,$current.IPAddress -join ', '
             }
