@@ -46,10 +46,11 @@ Function Get-Subnet {
 
     [cmdletbinding()]
     Param ( 
-        [parameter(ValueFromPipeline)]
-        [string]
+        [parameter(Position=0,ValueFromPipeline)]
+        [string[]]
         $IP,
 
+        [parameter(Position=1)]
         [ValidateRange(0, 32)]
         [int]
         $MaskBits,
@@ -61,43 +62,20 @@ Function Get-Subnet {
     Begin{
         function Convert-IPtoInt64 ($ip) { 
             $octets = $ip.split(".") 
-            [int64]([int64]$octets[0] * 16777216 + [int64]$octets[1] * 65536 + [int64]$octets[2] * 256 + [int64]$octets[3]) 
+            [int64]([int64]$octets[0] * 16777216 +
+            [int64]$octets[1] * 65536 +
+            [int64]$octets[2] * 256 +
+            [int64]$octets[3]) 
         }
+
         function Convert-Int64toIP ([int64]$int) { 
-            (([math]::truncate($int / 16777216)).tostring() + "." + ([math]::truncate(($int % 16777216) / 65536)).tostring() + "." + ([math]::truncate(($int % 65536) / 256)).tostring() + 
-"." + ([math]::truncate($int % 256)).tostring() )
+            (([math]::truncate($int / 16777216)).tostring() + "." +
+            ([math]::truncate(($int % 16777216) / 65536)).tostring() + "." +
+            ([math]::truncate(($int % 65536) / 256)).tostring() + "." +
+            ([math]::truncate($int % 256)).tostring() )
         }
 
-        $results = [ordered]@{}
-    }
-
-    Process {
-
-        If ($PSBoundParameters.ContainsKey('MaskBits')){ 
-            $Mask = $MaskBits 
-        }
-
-        $IPList = If (-not $IP){ 
-            Get-NetIPAddress | Where-Object {
-                $_.AddressFamily -eq 'IPv4' -and $_.PrefixOrigin -ne 'WellKnown'
-            }
-        }
-
-        foreach($LocalIP in $IPList){
-            $IP = $LocalIP.IPAddress
-            Write-Verbose "Local IP: $IP"
-
-            If($Mask -notin 0..32){$Mask = $LocalIP.PrefixLength}
-
-            If($IP -match '/\d'){ 
-                $IPandMask = $IP -Split '/' 
-                $IP = $IPandMask[0]
-                $Mask = $IPandMask[1]
-            }
-        
-            $IPAddr = [Net.IPAddress]::Parse($IP)
-            Write-Verbose "IP Addr: $IPAddr"
-
+        function Get-DefaultMask ($IP) {
             $Class = Switch ($IP.Split('.')[0]){
                 { $_ -in 0..127 } { 'A' }
                 { $_ -in 128..191 } { 'B' }
@@ -106,21 +84,66 @@ Function Get-Subnet {
                 { $_ -in 240..255 } { 'E' }
             
             }
+
             Write-Verbose "Class: $Class"
 
-            If ($Mask -notin 0..32) {
-                $Mask = Switch ($Class) {
+            $Mask = Switch ($Class) {
                     'A' { 8 }
                     'B' { 16 }
                     'C' { 24 }
                     default { Throw "Subnet mask size was not specified and could not be inferred because the address is Class $Class." }
+            }
+
+            Write-Warning "No subnet mask was specified. Using default subnet mask /$Mask for Class $Class network."
+
+            $Mask
+        }
+
+        $results = [ordered]@{}
+    }
+
+    Process {
+
+        $IPList = If ($IP){
+            foreach($address in $IP){
+                If($address -match '/\d'){
+                    $address,$Mask = $address -Split '/'
+                }
+                else{
+                    $Mask = if($PSBoundParameters.ContainsKey('MaskBits')){
+                        $PSBoundParameters['MaskBits']
+                    }
+                    else{
+                        Get-DefaultMask $address
+                    }
                 }
 
-                Write-Warning "Subnet mask size was not specified. Using default subnet size for a Class $Class network of /$Mask."
+                [PSCustomObject]@{
+                    IPAddress    = $address
+                    PrefixLength = $Mask 
+                }
             }
-            Write-Verbose "Mask: $Mask"
+        }
+        else{
+            Get-NetIPAddress | Where-Object {
+                $_.AddressFamily -eq 'IPv4' -and $_.PrefixOrigin -ne 'WellKnown'
+            }
+        }
+        
+        foreach($address in $IPList){
+            $IPAddr = [Net.IPAddress]::Parse($address.IPAddress)
+
+            if($null -eq $IPAddr){
+                Write-Warning "Unable to parse $($address.IPAddress)"
+                break
+            }
+
+            $mask = $address.PrefixLength
+
+            Write-Verbose "IP Addr: $IPAddr"
+            Write-Verbose "Mask: $mask"
             
-            $MaskAddr = [IPAddress]::Parse((Convert-Int64toIP -int ([convert]::ToInt64(("1" * $Mask + "0" * (32 - $Mask)), 2))))        
+            $MaskAddr = [IPAddress]::Parse((Convert-Int64toIP -int ([convert]::ToInt64(("1" * $mask + "0" * (32 - $mask)), 2))))        
             $NetworkAddr = [IPAddress]($MaskAddr.address -band $IPAddr.address) 
             $BroadcastAddr = [IPAddress](([IPAddress]::parse("255.255.255.255").address -bxor $MaskAddr.address -bor $NetworkAddr.address))
         
@@ -129,21 +152,22 @@ Function Get-Subnet {
 
             $HostAddressCount = ($HostEndAddr - $HostStartAddr) + 1
         
-            If ($Mask -ge 16 -or $Force) {
+            If ($mask -ge 16 -or $Force) {
             
-                Write-Progress "Calcualting host addresses for $NetworkAddr/$Mask.."
+                Write-Progress "Calcualting host addresses for $NetworkAddr/$mask.."
 
                 $HostAddresses = for ($i = $HostStartAddr; $i -le $HostEndAddr; $i++) {
                     Convert-Int64toIP -int $i
                 }
             }
             Else {
-                Write-Warning "Host address calculation was not performed because it would take some time for a /$Mask subnet. `nUse -Force if you want it to occur."
+                Write-Warning "Calculation for /$Mask subnet can take a while.`nUse -Force if you want it to occur."
+                break
             }
 
             $current = [pscustomobject]@{
                 IPAddress        = $IPAddr
-                MaskBits         = $Mask
+                MaskBits         = $mask
                 NetworkAddress   = $NetworkAddr
                 BroadcastAddress = $broadcastaddr
                 SubnetMask       = $MaskAddr
@@ -152,15 +176,19 @@ Function Get-Subnet {
                 HostAddresses    = $HostAddresses
                 HostAddressCount = $HostAddressCount
             }
-
-            if($results[$current.range]){
-                $results[$current.range].IPAddress = $results[$current.range].IPAddress,$current.IPAddress -join ', '
+            
+            if($results["$NetworkAddr-$mask"]){
+                $results["$NetworkAddr-$mask"].IPAddress = $results["$NetworkAddr-$mask"].IPAddress,$current.IPAddress -join ', '
             }
             else{
-                $results[$current.range] = $current
+                $results["$NetworkAddr-$mask"] = $current
             }
         }
 
+        Remove-Variable -Name Mask,IPAddr,IPList -ErrorAction SilentlyContinue
+    }
+
+    end{
         $results.values
     }
 }
