@@ -36,7 +36,7 @@ function Install-7zip {
         Win32NT {
             $7z = $downloadlist | Where-Object extension -like '*.msi' |
                 Select-Object -First 1
-            $7zfile = "$env:USERPROFILE\$($7z.FileName)"
+            $7zfile = "$env:USERPROFILE\Downloads\$($7z.FileName)"
             Write-Verbose "Downloading $($7z.FileName)"
             Invoke-WebRequest $7z.URL -OutFile $7zfile
             Write-Verbose "Installing $7zfile" -Verbose
