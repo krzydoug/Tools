@@ -21,7 +21,7 @@ function Get-DNSRecord {
     'microsoft.com','stackoverflow.com' | Get-DNSRecord 8.8.8.8 NS, A, TXT
     Queries DNS server 8.8.8.8 for NS, A, and TXT records for microsoft.com and stackoverflow.com. 
     .NOTES
-    Requires the wonderful DnsClient-PS module
+    Requires the wonderful DnsClient-PS module (https://github.com/rmbolger/DnsClient-PS)
     .LINK
     https://github.com/krzydoug/Tools/blob/master/Get-DNSRecord.ps1
     #>
