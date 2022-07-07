@@ -26,7 +26,6 @@ function Get-DNSRecord {
     https://github.com/krzydoug/Tools/blob/master/Get-DNSRecord.ps1
     #>
 
-
     [CmdletBinding()]
     Param(
         [Parameter(Position=0, Mandatory=$true, ValueFromPipeline=$true)]
