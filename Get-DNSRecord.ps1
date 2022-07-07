@@ -23,7 +23,7 @@ function Get-DNSRecord {
     .NOTES
     Requires the wonderful DnsClient-PS module
     .LINK
-    Doug Maurer
+    https://github.com/krzydoug/Tools/blob/master/Get-DNSRecord.ps1
     #>
 
 
