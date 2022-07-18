@@ -17,6 +17,11 @@ Function Reset-VssWriter {
 
         $writerdata = '[
             {
+                "WriterName":  "System Writer",
+                "ServiceName":  "CryptSvc",
+                "ServiceDisplayName":  "Cryptographic Services"
+            },
+            {
                 "WriterName":  "ASR Writer",
                 "ServiceName":  "VSS",
                 "ServiceDisplayName":  "Volume Shadow Copy"
@@ -138,12 +143,12 @@ Function Reset-VssWriter {
     process{
         $lookup = ($Name | ForEach-Object {[regex]::Escape($_)}) -join '|'
 
-        $found = $writerlist | Where-Object Name -Match $lookup
+        $found = $writerdata | Where-Object WriterName -Match $lookup | Get-Unique
     
         if($found){
             foreach($writer in $found){
-                $service = $writertable[$writer.Name]
-                $message = "Restart writer '$($writer.Name)' service '$($service.ServiceDisplayName) ($($service.ServiceName))'"
+                $service = $writertable[$writer.WriterName]
+                $message = "Restart writer '$($writer.WriterName)' service '$($service.ServiceDisplayName) ($($service.ServiceName))'"
 
                 if($PSCmdlet.ShouldProcess($message,$message,'Restart Service?')){
                     Restart-Service -Name $service.ServiceName -Confirm:$false -Verbose:$($PSBoundParameters.ContainsKey('Verbose'))
