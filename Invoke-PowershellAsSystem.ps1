@@ -20,6 +20,6 @@ function Invoke-PowershellAsSystem {
         Invoke-WebRequest https://live.sysinternals.com/tools/psexec.exe -OutFile $psexec -UseBasicParsing
     }
 
-    Start-Process $psexec -ArgumentList '/s','/i',$exe[$Edition],'/accepteula','/nobanner' -WindowStyle -Verb runas Hidden 2>&1
+    Start-Process $psexec -ArgumentList '/s','/i',$exe[$Edition],'/accepteula','/nobanner' -WindowStyle Hidden -Verb runas 2>&1
 
 }
