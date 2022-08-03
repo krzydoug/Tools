@@ -7,15 +7,6 @@ function Invoke-PowershellAsSystem {
         $Edition = 'Desktop'
     )
 
-    Write-Verbose "Verifying process is elevated"
-    $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-    $iselevated = $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-
-    if($iselevated -ne $true){
-        Write-Warning "Invoke-PowershellAsSystem must be ran as administrator"
-        return
-    }
-
     $psexec = Join-Path $env:TEMP 'Psexec.exe'
 
     $exe = @{
@@ -29,6 +20,6 @@ function Invoke-PowershellAsSystem {
         Invoke-WebRequest https://live.sysinternals.com/tools/psexec.exe -OutFile $psexec -UseBasicParsing
     }
 
-    Start-Process $psexec -ArgumentList '/s','/i',$exe[$Edition],'/accepteula','/nobanner' -WindowStyle Hidden 2>&1
+    Start-Process $psexec -ArgumentList '/s','/i',$exe[$Edition],'/accepteula','/nobanner' -WindowStyle -Verb runas Hidden 2>&1
 
 }
