@@ -28,7 +28,6 @@ function Get-TextFromPdf {
 
     process{
         foreach($pdf in $Path){
-
             Write-Verbose "Processing $($pdf)"
 
             try{
