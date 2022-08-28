@@ -34,7 +34,7 @@ function Get-TextFromPdf {
                 $pdfreader = New-Object iTextSharp.text.pdf.pdfreader -ArgumentList $pdf.FullName
 
                 for ($page = 1; $page -le $pdfreader.NumberOfPages; $page++){
-		            [iTextSharp.text.pdf.parser.PdfTextExtractor]::GetTextFromPage($pdfreader,$page)
+		    [iTextSharp.text.pdf.parser.PdfTextExtractor]::GetTextFromPage($pdfreader,$page)
 	        }
 
 	        $pdfreader.Close()
