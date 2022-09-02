@@ -110,13 +110,14 @@ function Get-SslCertificate {
             }
         
             [PSCustomObject]@{
-                URL        = $site
-                Name       = $req.ServicePoint.Certificate.GetName()
-                Subject    = $req.ServicePoint.Certificate.subject
-                Issuer     = $req.ServicePoint.Certificate.GetIssuerName()
-                ValidFrom  = $certEffectiveDate
-                Expiration = $certExpDate
-                Thumbprint = $certThumbprint
+                URL           = $site
+                Name          = $req.ServicePoint.Certificate.GetName()
+                Subject       = $req.ServicePoint.Certificate.subject
+                Issuer        = $req.ServicePoint.Certificate.GetIssuerName()
+                ValidFrom     = $certEffectiveDate
+                Expiration    = $certExpDate
+                Thumbprint    = $certThumbprint
+                DaysRemaining = $certExpiresIn
             }
         }
     }
