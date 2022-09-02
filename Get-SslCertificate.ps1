@@ -5,33 +5,35 @@ function Get-SslCertificate {
     .DESCRIPTION
         Retrieve SSL cert from HTTPS site
     .EXAMPLE
-        PS C:\> Get-SslCertificate -Url https://www.microsoft.com
-
-        Name       : C=US, S=WA, L=Redmond, O=Microsoft Corporation, OU=Microsoft Corporation, CN=www.microsoft.com
-        Subject    : CN=www.microsoft.com, OU=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=WA, C=US
-        Issuer     : C=US, O=Microsoft Corporation, CN=Microsoft RSA TLS CA 01
-        ValidFrom  : 7/28/2021 4:22:06 PM
-        Expiration : 7/28/2022 4:22:06 PM
-        Thumbprint : B5BC7B1FD96BE16E49CB61354824CF4259A2BE75
+        PS C:\> Get-SslCertificate -Url https://www.microsoft.com | Select-Object -Property *
+        
+        URL            : https://www.microsoft.com
+        Name           : C=US, S=WA, L=Redmond, O=Microsoft Corporation, CN=www.microsoft.com
+        Subject        : CN=www.microsoft.com, O=Microsoft Corporation, L=Redmond, S=WA, C=US
+        Issuer         : C=US, O=Microsoft Corporation, CN=Microsoft RSA TLS CA 01
+        ValidFrom      : 7/8/2022 1:22:47 PM
+        Expiration     : 7/8/2023 1:22:47 PM
+        DaysRemaining  : 308
+        Thumbprint     : 7625E4F156DB2797A134EC418359F6D9FEDDB925
+        RawCertificate : System.Security.Cryptography.X509Certificates.X509Certificate
     .EXAMPLE
         PS C:\> 'msn.com','google.com' | Get-SslCertificate
+        
+        WARNING: The https://google.com certificate expires in 65 days
+        
+        Url                Subject         Expiration            Issuer
+        ---                -------         ----------            ------
+        https://msn.com    CN=*.msn.com    9/28/2022 12:11:31 AM C=US, O=Microsoft Corporation, CN=Microsoft RSA TLS CA 02
+        https://google.com CN=*.google.com 11/7/2022 2:17:54 AM  C=US, O=Google Trust Services LLC, CN=GTS CA 1C3
+    .EXAMPLE
+        PS C:\> Get-SslCertificate bing.com,powershell.org,amazon.com | Select-Object -ExpandProperty RawCertificate
+        
+               Handle Issuer                                                    Subject                                                                            
+               ------ ------                                                    -------                                                                            
+        1765019620096 CN=Microsoft RSA TLS CA 01, O=Microsoft Corporation, C=US CN=www.bing.com                                                                    
+        1765019619200 CN=Cloudflare Inc ECC CA-3, O="Cloudflare, Inc.", C=US    CN=sni.cloudflaressl.com, O="Cloudflare, Inc.", L=San Francisco, S=California, C=US
+        1765019624704 CN=DigiCert Global CA G2, O=DigiCert Inc, C=US            CN=*.peg.a2z.com 
 
-        Url        : https://msn.com
-        Name       : CN=*.msn.com
-        Subject    : CN=*.msn.com
-        Issuer     : C=US, O=Microsoft Corporation, CN=Microsoft RSA TLS CA 01
-        ValidFrom  : 9/22/2021 3:59:56 PM
-        Expiration : 9/22/2022 3:59:56 PM
-        Thumbprint : 1EA7EFDB1B73318C2FB75B9A57D647894263070A
-
-        WARNING: The certificate for https://google.com expires in 72 days
-        Url        : https://google.com
-        Name       : CN=www.google.com
-        Subject    : CN=www.google.com
-        Issuer     : C=US, O=Google Trust Services LLC, CN=GTS CA 1C3
-        ValidFrom  : 3/17/2022 6:49:13 AM
-        Expiration : 6/9/2022 6:49:12 AM
-        Thumbprint : FA202003DD8DD881FC80284BFE33343DD8D61788
     .INPUTS
         String
     .OUTPUTS
@@ -51,6 +53,11 @@ function Get-SslCertificate {
     )
     
     begin {
+        $TypeName = 'SCS.Certificate'
+        $defaultDisplaySet = 'Url', 'Subject', 'Expiration', 'Issuer'
+        $defaultDisplayPropertySet = New-Object System.Management.Automation.PSPropertySet('DefaultDisplayPropertySet',[string[]]$defaultDisplaySet)
+        $PSStandardMembers = [System.Management.Automation.PSMemberInfo[]]@($defaultDisplayPropertySet)
+        
         $script = {
             Param($site,$timeout)
 
@@ -108,17 +115,19 @@ function Get-SslCertificate {
             if ($certExpiresIn -lt $minCertAge){
                 Write-Warning "The $site certificate expires in $certExpiresIn days"
             }
-        
+
             [PSCustomObject]@{
-                URL           = $site
-                Name          = $req.ServicePoint.Certificate.GetName()
-                Subject       = $req.ServicePoint.Certificate.subject
-                Issuer        = $req.ServicePoint.Certificate.GetIssuerName()
-                ValidFrom     = $certEffectiveDate
-                Expiration    = $certExpDate
-                Thumbprint    = $certThumbprint
-                DaysRemaining = $certExpiresIn
-            }
+                URL            = $site
+                Name           = $req.ServicePoint.Certificate.GetName()
+                Subject        = $req.ServicePoint.Certificate.subject
+                Issuer         = $req.ServicePoint.Certificate.GetIssuerName()
+                ValidFrom      = $certEffectiveDate
+                Expiration     = $certExpDate
+                DaysRemaining  = $certExpiresIn
+                Thumbprint     = $certThumbprint
+                RawCertificate = $req.ServicePoint.Certificate
+            } | Add-Member MemberSet PSStandardMembers $PSStandardMembers -PassThru
+
         }
     }
     
