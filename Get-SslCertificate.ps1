@@ -89,7 +89,7 @@ function Get-SslCertificate {
         
             $effectiveDate = $req.ServicePoint.Certificate.GetEffectiveDateString()
 
-            $certEffectiveDate = [datetime]::ParseExact(($effectiveDate -replace ' (PM|AM)'), “M/d/yyyy H:mm:ss”, $null)
+            $certEffectiveDate = [datetime]::ParseExact(($effectiveDate -replace ' (PM|AM)'), "M/d/yyyy H:mm:ss", $null)
         
             if($effectiveDate -match 'PM$'){
                 $certEffectiveDate = $certEffectiveDate.AddHours(12)
@@ -97,7 +97,7 @@ function Get-SslCertificate {
         
             $expDate = $req.ServicePoint.Certificate.GetExpirationDateString()
 
-            $certExpDate = [datetime]::ParseExact(($expDate -replace ' (PM|AM)'), “M/d/yyyy H:mm:ss”, $null)
+            $certExpDate = [datetime]::ParseExact(($expDate -replace ' (PM|AM)'), "M/d/yyyy H:mm:ss", $null)
         
             if($expDate -match 'PM$'){
                 $certExpDate = $certExpDate.AddHours(12)
