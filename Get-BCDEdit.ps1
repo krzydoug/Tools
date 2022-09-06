@@ -23,16 +23,14 @@ function Get-BCDEdit {
             $key,$value = $_.Split(' ',2).trim()
             if($key -eq 'Windows')
             {
-                if($props.keys.Count -gt 0)
-                {
+                if($props.keys.Count -gt 0){
                     [pscustomobject]$props
                 }
                 $props = [ordered]@{
                     "BCD Entry" = $value
                 }
             }
-            else
-            {
+            else{
                 $props.Add($key,$value)
             }
         } -End {[pscustomobject]$props} -OutVariable bcd
