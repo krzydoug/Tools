@@ -35,8 +35,8 @@ function Get-DNSRecord {
         [String]$NameServer,
 
         [Parameter(Position=2)]
-        [ValidateSet('SOA', 'A', 'CNAME', 'MX', 'TXT', 'NS')]
-        [String[]]$QueryType = ('SOA', 'A', 'CNAME', 'MX', 'TXT', 'NS')
+        [ValidateSet('SOA', 'A', 'CNAME', 'MX', 'TXT', 'NS','DMARC')]
+        [String[]]$QueryType = ('SOA', 'A', 'CNAME', 'MX', 'TXT', 'NS', 'DMARC')
     )
 
     Begin{
@@ -61,7 +61,13 @@ function Get-DNSRecord {
             $params.Query = $nm
 
             $QueryType | Foreach-Object {
-                $params.QueryType = $_
+                $params.QueryType = if($_ -eq 'DMARC'){
+                    $params.Query = "_dmarc.$nm"
+                    'TXT'
+                }
+                else{
+                    $_
+                }
 
                 try{
                     foreach($result in Resolve-Dns @params){
