@@ -71,10 +71,12 @@ function Get-DNSRecord {
 
                 try{
                     foreach($result in Resolve-Dns @params){
+                        Write-Verbose "Querying $($params.Query) for $($params.QueryType) records"
+                        
                         if($result.Answers){
                             $result | Select-Object NameServer -ExpandProperty Answers
                         }
-                        elseif($result.ErrorMessage -eq 'Non-Existent Domain'){
+                        elseif($result.ErrorMessage -eq 'Non-Existent Domain' -and $params.QueryType -eq 'DMARC'){
                             Write-Warning "No dmarc record found for $nm"
                         }
                     }
