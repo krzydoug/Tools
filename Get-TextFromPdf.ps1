@@ -10,7 +10,7 @@ function Get-TextFromPdf {
             $unzip = Join-Path $env:TEMP itextsharp
             $zip = Join-Path $env:TEMP itextsharp.zip
 
-            if(-not ($dll = Get-ChildItem C:\powershell\itextsharp -Filter *.dll -Recurse )){
+            if(-not ($dll = Get-ChildItem $unzip -Filter *.dll -Recurse )){
                 Write-Verbose "Downloading itextsharp"
 
                 Invoke-WebRequest https://github.com/itext/itextsharp/releases/download/5.5.13.1/itextsharp.5.5.13.1.nupkg -OutFile $zip
