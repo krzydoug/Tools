@@ -21,8 +21,7 @@ function Get-BCDEdit {
 
         $null = $result | ForEach-Object -Begin {$props = $null} -Process {
             $key,$value = $_.Split(' ',2).trim()
-            if($key -eq 'Windows')
-            {
+            if($key -eq 'Windows'){
                 if($props.keys.Count -gt 0){
                     [pscustomobject]$props
                 }
