@@ -28,13 +28,13 @@ function Get-SslCertificate {
         Issuer             : CN=Microsoft Azure TLS Issuing CA 06, O=Microsoft Corporation, C=US
         Subject            : CN=www.microsoft.com, O=Microsoft Corporation, L=Redmond, S=WA, C=US
     .EXAMPLE
-        PS C:\> Get-SslCertificate bing.com,powershell.org,amazon.com | Select-Object -ExpandProperty RawCertificate
+        PS C:\> Get-SslCertificate bing.com,powershell.org,amazon.com
         
-        Url                    Subject                                                                             NotAfter             Issuer                                       
-        ---                    -------                                                                             --------             ------                                       
-        https://bing.com       CN=www.bing.com                                                                     3/2/2023 7:06:28 PM  CN=Microsoft RSA TLS CA 02, O=Microsoft Co...
-        https://powershell.org CN=sni.cloudflaressl.com, O="Cloudflare, Inc.", L=San Francisco, S=California, C=US 7/10/2023 6:59:59 PM CN=Cloudflare Inc ECC CA-3, O="Cloudflare,...
-        https://amazon.com     CN=*.peg.a2z.com                                                                    10/18/2023 6:59:5... CN=DigiCert Global CA G2, O=DigiCert Inc, ...
+        Url                    Subject                                                         NotAfter             Issuer                                       
+        ---                    -------                                                         --------             ------                                       
+        https://bing.com       CN=www.bing.com                                                 3/2/2023 7:06:28 PM  CN=Microsoft RSA TLS CA 02, O=Microsoft Co...
+        https://powershell.org CN=sni.cloudflaressl.com, O="Cloudflare, Inc.", L=San Francisco 7/10/2023 6:59:59 PM CN=Cloudflare Inc ECC CA-3, O="Cloudflare,...
+        https://amazon.com     CN=*.peg.a2z.com                                                10/18/2023 6:59:5... CN=DigiCert Global CA G2, O=DigiCert Inc, ...
     .EXAMPLE
         PS C:\> 'msn.com','google.com' | Get-SslCertificate
         
