@@ -14,10 +14,19 @@ Function Get-SnmpPrinter {
 
         if(-not (Test-Path $snmpwalk)){
             Write-Verbose "Downloading snmpwalk.zip"
+
             $zipfile = Join-Path $env:TEMP SNMPWalk.zip
             $destination = New-Item (Split-Path $snmpwalk -Parent) -Force -ItemType Directory
+
             Invoke-WebRequest -UseBasicParsing 'https://dl.ezfive.com/snmpsoft-tools/SnmpWalk.zip?_gl=1*19n1cvv*_ga*MjAzNzczMjA0NS4xNjY3OTc4ODUx*_ga_BEFD2E3R5Z*MTY2Nzk3ODg1MC4xLjEuMTY2Nzk3ODg4My4yNy4wLjA.' -OutFile $zipfile
+
+            if(-not (Test-Path $zipfile)){
+                Write-Warning "Error downloading snmpwalk.zip"
+                break
+            }
+
             Write-Verbose "Extracting snmpwalk.exe to $destination"
+
             $shell = New-Object -ComObject Shell.Application
             $shell.Namespace($destination.FullName).copyhere(($shell.NameSpace($zipfile)).items(),1540)
         }
