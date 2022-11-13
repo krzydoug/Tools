@@ -104,7 +104,7 @@ Function Get-Subnet {
 
         $defaultDisplaySet = 'NetworkAddress','SubnetMask','BroadcastAddress','HostAddressCount'
 
-        $defaultDisplayPropertySet = New-Object System.Management.Automation.PSPropertySet(‘DefaultDisplayPropertySet’,[string[]]$defaultDisplaySet)
+        $defaultDisplayPropertySet = New-Object System.Management.Automation.PSPropertySet('DefaultDisplayPropertySet',[string[]]$defaultDisplaySet)
         $PSStandardMembers = [System.Management.Automation.PSMemberInfo[]]@($defaultDisplayPropertySet)
 
         $results = [ordered]@{}
