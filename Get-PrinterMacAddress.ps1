@@ -14,8 +14,10 @@ Function Get-PrinterMacAddress {
 
         if(-not (Test-Path $snmpwalk)){
             $zipfile = Join-Path $env:TEMP SNMPWalk.zip
+            Write-Verbose "Downloading snmpwalk.zip"
             $destination = New-Item (Split-Path $snmpwalk -Parent) -Force -ItemType Directory
             Invoke-WebRequest -UseBasicParsing 'https://dl.ezfive.com/snmpsoft-tools/SnmpWalk.zip?_gl=1*19n1cvv*_ga*MjAzNzczMjA0NS4xNjY3OTc4ODUx*_ga_BEFD2E3R5Z*MTY2Nzk3ODg1MC4xLjEuMTY2Nzk3ODg4My4yNy4wLjA.' -OutFile $zipfile
+            Write-Verbose "Extracting snmpwalk.exe to $destination"
             $shell = New-Object -ComObject Shell.Application
             $shell.Namespace($destination.FullName).copyhere(($shell.NameSpace($zipfile)).items(),1540)
         }
@@ -25,8 +27,12 @@ Function Get-PrinterMacAddress {
         foreach($printer in $IP){
             foreach($oid in $oidlist){
                 $output = & $snmpwalk -r:$Printer -os:"$oid.0" -op:"$oid.2" -p:$Port -t:$Timeout -csv
-
+                
                 Write-Verbose "[$printer] $output"
+                
+                if($output -match 'timeout'){
+                    return
+                }
 
                 $results = $output |
                     ConvertFrom-Csv -Header OID, Type, Value, Value1 |
