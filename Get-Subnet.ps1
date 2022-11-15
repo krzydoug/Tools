@@ -161,9 +161,6 @@ Function Get-Subnet {
             $HostAddressCount = ($HostEndAddr - $HostStartAddr) + 1
         
             If ($mask -ge 16 -or $Force) {
-            
-                Write-Progress "Calcualting host addresses for $NetworkAddr/$mask.."
-
                 $HostAddresses = for ($i = $HostStartAddr; $i -le $HostEndAddr; $i++) {
                     Convert-Int64toIP -int $i
                 }
