@@ -44,8 +44,9 @@ Function Get-SnmpPrinter {
             ports,.1.3.6.1.2.1.6.13.1.3.0.0.0.0.1,.1.3.6.1.2.1.6.13.1.3.0.0.0.1
 '@ | ConvertFrom-Csv
 
-        Invoke-RestMethod -Uri https://raw.githubusercontent.com/krzydoug/Tools/master/Get-PrinterMacAddress.ps1 -UseBasicParsing | Invoke-Expression
-
+        if(-not (Test-Path Function:\Get-PrinterMacAddress)){
+            Invoke-RestMethod -Uri https://raw.githubusercontent.com/krzydoug/Tools/master/Get-PrinterMacAddress.ps1 -UseBasicParsing | Invoke-Expression
+        }
     }
 
     process {
@@ -88,9 +89,12 @@ Function Get-SnmpPrinter {
                                                     @{n='Trays';e={$trays -join "`n"}},
                                                     @{n='OpenPorts';e={if($ports = $ports | Get-Unique){$ports -join ", "}else{"N/A"}}}
 
-            $obj.psobject.TypeNames.Insert(0,$TypeName)
+            if($obj -and $obj.psobject.TypeNames[0] -ne 'SNMP.Printer'){
+                $obj.psobject.TypeNames.Insert(0,$TypeName)
+            }
+            
             $obj
-
+            
             Remove-Variable -Name name,value,model,bonjourname,bonjourdomain,serial,ipp,ipps,trays,ports,uptime -ErrorAction SilentlyContinue
         }
     }
