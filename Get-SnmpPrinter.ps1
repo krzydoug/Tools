@@ -8,7 +8,7 @@ Function Get-SnmpPrinter {
     begin {
         $TypeName = 'Snmp.Printer'
         $defaultDisplaySet = 'IP', 'Hostname', 'Model', 'SerialNumber'
-        Update-TypeData -TypeName $TypeName -DefaultDisplayPropertySet $defaultDisplaySet -Force
+        Update-TypeData -TypeName $TypeName -DefaultDisplayPropertySet $defaultDisplaySet -Force -ErrorAction SilentlyContinue
 
         $snmpwalk = Join-Path $env:TEMP 'SNMPWalk\snmpwalk.exe'
 
