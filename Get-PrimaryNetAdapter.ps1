@@ -22,6 +22,7 @@ Function Get-PrimaryNetAdapter {
          NotePropertyValue = $adapter | Get-NetIPAddress |
                                 Where-Object addressfamily -in $filter |
                                     Select-Object -ExpandProperty IPAddress
+         Passthru = $true
     }
 
     $adapter | Add-Member @amparams
