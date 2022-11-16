@@ -54,7 +54,7 @@ Function Find-SnmpPrinter {
 
     process {
         if(-not $IP){
-            Write-Verbose "No IP(s) provided, retrieving local subnet(s)"
+            Write-Verbose "No IP(s) provided, retrieving primary subnet"
 
             foreach($function in 'Get-Subnet','Get-PrimaryNetAdapter'){
                 if(-not (Test-Path Function:\$function)){
