@@ -16,15 +16,23 @@ Function Get-PrimaryNetAdapter {
     else{
         'IPv4'
     }
-
+    
+    $ip = $adapter | Get-NetIPAddress |
+              Where-Object addressfamily -in $filter
+              
     $amparams = @{
          NotePropertyName = 'IPAddress'
-         NotePropertyValue = $adapter | Get-NetIPAddress |
-                                Where-Object addressfamily -in $filter |
-                                    Select-Object -ExpandProperty IPAddress
-         Passthru = $true
+         NotePropertyValue = $ip.ipaddress
     }
 
     $adapter | Add-Member @amparams
 
+    $amparams = @{
+         NotePropertyName = 'PrefixLength'
+         NotePropertyValue = $ip.prefixlength
+         Passthru = $true
+    }
+
+    $adapter | Add-Member @amparams
+    
 }
