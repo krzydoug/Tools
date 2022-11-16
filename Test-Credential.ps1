@@ -75,8 +75,13 @@ function Test-Credential {
                         $obj.ValidateCredentials($cred.username, $cred.GetNetworkCredential().password)
                     }
                     catch{
-                        Write-Warning $_.exception.message
-                        $false
+                        if($_.Exception.InnerException -like "*blank passwords aren't allowed*"){
+                            $true
+                        }
+                        else{
+                            Write-Warning $_.exception.message
+                            $false
+                        }
                     }
                 }
             }
