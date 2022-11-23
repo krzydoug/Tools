@@ -66,11 +66,18 @@ Function Get-SnmpPrinter {
             }
 
             if($null -eq $name){
-                $result = (& $snmpwalk -r:$printer -os:.1.3.6.1.4.1.11.2.4.3.1.12.1.2.36 -op:.1.3.6.1.4.1.11.2.4.3.1.12.1.2.48) -match 'host'
+                '.1.3.6.1.4.1.18334.1.1.2.1.5.7.1.1.1.12.0,.1.3.6.1.4.1.18334.1.1.2.1.5.7.1.1.1.12.1',
+                '.1.3.6.1.4.1.1347.40.10.1.1.5.0,.1.3.6.1.4.1.1347.40.10.1.1.5.1' | ForEach-Object {
+                    $start,$end = $_ -split ','
 
-                $name = if([string]$result -match 'host\s?name:?\s+(\S+)'){
-                    $Matches.1
+                    $value = & $snmpwalk -r:$printer -os:$start -op:$end -csv |
+                        ConvertFrom-Csv -Header OID, Type, Value, Value1 | Select-Object -ExpandProperty value
+
+                    if($value){
+                        $name = $value
+                    }
                 }
+
             }
 
             $uptime = & $snmpwalk -r:$printer -os:.1.3.6.1.2.1.1.3 -op:.1.3.6.1.2.1.1.3.1 -csv |
