@@ -90,44 +90,14 @@ Function Get-Windows11Iso {
     catch{}
 
     if(-not $firefox){
-        Write-Verbose "[$(Get-Date -Format s)] Installing Firefox"
+        Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/krzydoug/Tools/master/Install-Firefox.ps1' -UseBasicParsing | Invoke-Expression
+        Install-Firefox
+    }
 
-        $DateStamp = Get-Date -Format yyyyMMddTHHmmss
-        $log = '{0}-{1}.log' -f $DateStamp,'Firefox_Installation'
-
-        $MsiParams = @{
-            FilePath     = 'msiexec.exe'
-
-            ArgumentList = "/i",
-                            "firefox.msi",
-                            "/qn",
-                            "/norestart",
-                            "/L",
-                            $log
-
-            Wait         = [switch]::Present
-
-            PassThru     = [switch]::Present
-        }
-
-        try{
-            $result = Start-Process @MsiParams
-
-            if($result.ExitCode -eq 0){
-                Write-Verbose "[$(Get-Date -Format s)] MSI execution succeeded"
-            }
-            else{
-                $msg = "[$(Get-Date -Format s)] Firefox MSI execution completed with error. ExitCode: $($result.ExitCode)"
-                Write-Error $msg
-            }
-        }
-        catch{
-            $msg = "[$(Get-Date -Format s)] Error starting MSI installation: $($_.exception.message)"
-            Write-Error $msg
-        }
-
+    try{
         $firefox = Start-SeFirefox -Quiet -Headless
     }
+    catch{}
 
     if(-not $firefox){
         Write-Warning "[$(Get-Date -Format s)] unable to automatically create download link, please go to https://www.microsoft.com/software-download/windows11 and generate a download link"
