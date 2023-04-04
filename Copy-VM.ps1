@@ -128,7 +128,7 @@ function Copy-VM {
         }
         
         if(!$SourceVMobject){
-            Write-Warning "Source ESXi host required"
+            Write-Warning "Source VM required"
             break
         }
     }
