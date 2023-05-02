@@ -151,7 +151,7 @@ Function Reset-VssWriter {
                 $message = "Restart writer '$($writer.WriterName)' service '$($service.ServiceDisplayName) ($($service.ServiceName))'"
 
                 if($PSCmdlet.ShouldProcess($message,$message,'Restart Service?')){
-                    Restart-Service -Name $service.ServiceName -Confirm:$false -Verbose:$($PSBoundParameters.ContainsKey('Verbose'))
+                    Restart-Service -Name $service.ServiceName -Confirm:$false -Verbose:$($PSBoundParameters.ContainsKey('Verbose')) -Force
                 }
             }
         }
