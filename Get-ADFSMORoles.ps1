@@ -1,12 +1,12 @@
 Function Get-ADFSMORoles {
-    $forest = Get-ADForest
-    $domain = Get-ADDomain
+    $forest = [System.DirectoryServices.ActiveDirectory.Forest]::GetCurrentForest()
+    $domain = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
 
     [PSCustomObject]@{
-        PDCEmulator          = $domain.PDCEmulator
-        RIDMaster            = $domain.Ridmaster
-        SchemaMaster         = $forest.schemamaster
-        DomainNamingMaster   = $forest.domainnamingmaster
-        InfrastructureMaster = $domain.InfrastructureMaster
+        PDCEmulator          = $domain.PDCRoleOwner
+        RIDMaster            = $domain.RidRoleOwner
+        SchemaMaster         = $forest.SchemaRoleOwner
+        DomainNamingMaster   = $forest.NamingRoleOwner
+        InfrastructureMaster = $domain.InfrastructureRoleOwner
     }
 }
