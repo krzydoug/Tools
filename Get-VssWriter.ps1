@@ -24,7 +24,7 @@ Function Get-VssWriter {
         if($_ -match $pattern){
             $Matches.Remove(0)
             $current = [PSCustomObject]$Matches
-            $current.PSObject.TypeNames.Insert(0,'System.Net.NetworkInformation')
+            $current.PSObject.TypeNames.Insert(0,'System.ServiceProcess.ServiceController')
             $current | Add-Member MemberSet PSStandardMembers $PSStandardMembers -PassThru
         }
     }
