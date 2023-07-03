@@ -48,11 +48,11 @@ function Install-Firefox {
         FilePath     = 'msiexec.exe'
 
         ArgumentList = "/i",
-                        "$firefoxmsi",
+                        "`"$firefoxmsi`"",
                         "/qn",
                         "/norestart",
                         "/L",
-                        $log
+                        "`"$log`""
 
         Wait         = [switch]::Present
 
