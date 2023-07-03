@@ -1,4 +1,4 @@
-﻿function Set-PowerPlan{
+function Set-PowerPlan{
     [cmdletbinding()]
     Param(
         [parameter()]
