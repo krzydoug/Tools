@@ -8,7 +8,7 @@ function Install-Firefox {
     if($installed){
         $version = [version]($installed | Get-ItemPropertyValue -Name DisplayVersion)
 
-        if($version -ge [version]'115.0.0'){
+        if($version -ge [version]'115.0'){
             Write-Verbose "[$(Get-Date -Format s)] Firefox version $version is installed."
             return
         }
@@ -42,7 +42,8 @@ function Install-Firefox {
     Write-Verbose "[$(Get-Date -Format s)] Installing Firefox"
 
     $DateStamp = Get-Date -Format yyyyMMddTHHmmss
-    $log = '{0}-{1}.log' -f $DateStamp,'Firefox_Installation'
+    $logfile = '{0}-{1}.log' -f $DateStamp,'Firefox_Installation'
+    $log = Join-Path $env:temp $logfile
 
     $MsiParams = @{
         FilePath     = 'msiexec.exe'
