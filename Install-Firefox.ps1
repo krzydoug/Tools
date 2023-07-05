@@ -8,7 +8,7 @@ function Install-Firefox {
     if($installed){
         $version = [version]($installed | Get-ItemPropertyValue -Name DisplayVersion)
 
-        if($version -ge [version]'108.0.1'){
+        if($version -ge [version]'115.0.0'){
             Write-Verbose "[$(Get-Date -Format s)] Firefox version $version is installed."
             return
         }
