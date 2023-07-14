@@ -15,27 +15,27 @@ Function Test-TCPPort {
     .OUTPUTS
     [PSCustomObject]
     .EXAMPLE
-    PS> $params = @{
-            ComputerName  = (Get-ADComputer -Filter "enabled -eq '$true' -and operatingsystem -like '*server*'").name
-            Port          = 20,21,25,80,389,443,636,1311,1433,3268,3269
-            OutVariable   = 'results'
-            Timeout       = 1000
-        }
-    PS> Test-TCPPort @params | Out-GridView
+    $params = @{
+        ComputerName  = (Get-ADComputer -Filter "enabled -eq '$true' -and operatingsystem -like '*server*'").name
+        Port          = 20,21,25,80,389,443,636,1311,1433,3268,3269
+        OutVariable   = 'results'
+        Timeout       = 1000
+    }
+    Test-TCPPort @params | Out-GridView
     .EXAMPLE
-    PS> Test-TCPPort -ComputerName www.google.com -Port 80, 443 -Timeout 600
+    Test-TCPPort -ComputerName www.google.com -Port 80, 443 -Timeout 600
     ComputerName     80  443
     ------------     --  ---
     www.google.com True True
     .EXAMPLE
         
-    PS> $params = @{
+    $params = @{
         ComputerName  = (Get-ADComputer -Filter "enabled -eq '$true' -and operatingsystem -like '*server*'").name
         Port          = 20,21,25,80,389,443,636,1311,1433,3268,3269
         OutVariable   = 'results'
         ThrottleLimit = 150
     }
-    PS> [PSCustomObject]@{
+    [PSCustomObject]@{
         'Total hosts'      = ($hosts = $params.ComputerName.count)
         'Total ports'      = ($ports = $params.Port.count)
         'Total tests'      = ($total = $hosts * $ports)
@@ -43,7 +43,7 @@ Function Test-TCPPort {
         'Tests per second' = $total / $seconds
         'Total open ports' = $results.foreach{$_.psobject.members.where{$_.value -eq $true}}.count
     }
-    PS> $results | Out-GridView
+    $results | Out-GridView
         
     Total hosts      : 27
     Total ports      : 11
@@ -54,7 +54,7 @@ Function Test-TCPPort {
         
         
     .EXAMPLE
-    PS> Test-TCPPort -ComputerName google.com,bing.com,reddit.com -Port 80, 443, 25, 389 -Timeout 400
+    Test-TCPPort -ComputerName google.com,bing.com,reddit.com -Port 80, 443, 25, 389 -Timeout 400
     ComputerName : google.com
     80           : True
     443          : True
@@ -70,6 +70,7 @@ Function Test-TCPPort {
     443          : True
     25           : False
     389          : False
+    
     .Notes
     Requires powershell core (foreach-object -parallel) and it's only been tested on 7.2
     #>
@@ -117,7 +118,7 @@ Function Test-TCPPort {
             } -ThrottleLimit @($using:port).count
 
             $ht[$_] | Select-Object -Property (,'ComputerName' + $using:port)
-
+`
         } -ThrottleLimit $ThrottleLimit
     }
 
