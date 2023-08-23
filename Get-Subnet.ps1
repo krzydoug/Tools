@@ -46,12 +46,14 @@ Function Get-Subnet {
 
     [cmdletbinding()]
     Param ( 
-        [parameter(Position=0,ValueFromPipeline)]
+        [parameter(Position=0,ValueFromPipelineByPropertyName,ValueFromPipeline)]
+        [alias('IPAddress')]
         [string[]]
         $IP,
 
-        [parameter(Position=1)]
+        [parameter(Position=1,ValueFromPipelineByPropertyName)]
         [ValidateRange(0, 32)]
+        [alias('PrefixLength', 'SubnetMask')]
         [int]
         $MaskBits,
 
@@ -111,7 +113,6 @@ Function Get-Subnet {
     }
 
     Process {
-
         $IPList = If ($IP){
             foreach($address in $IP){
                 If($address -match '/\d'){
@@ -199,4 +200,5 @@ Function Get-Subnet {
     end{
         $results.values
     }
+
 }
