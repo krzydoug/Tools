@@ -1,7 +1,16 @@
 Function Get-NetworkDevice {
-
+    [cmdletbinding()]
+    Param()
+    
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
+    'Get-PingableHost', 'Get-PrimaryNetAdapter', 'Get-Subnet' | ForEach-Object {
+        if(-not (Test-Path Function:\$_)){
+            Write-Verbose "Retrieving function: $_"
+            Invoke-RestMethod "https://raw.githubusercontent.com/krzydoug/Tools/master/$_.ps1" | Invoke-Expression
+        }
+    }
+    
     Function Resolve-Vendor {
         [cmdletbinding()]
         Param($MAC)
@@ -29,11 +38,24 @@ Function Get-NetworkDevice {
         }
     }
 
+    try{
+        $subnet = Get-PrimaryNetAdapter | Get-NetIPAddress | Get-Subnet
+        try{
+            $null = $subnet.HostAddresses | Get-PingableHost
+        }
+        catch{
+            Write-Warning "Error pinging address range $($subnet.Range)"
+        }
+    }
+    catch{
+        Write-Warning "Unable to retrieve subnet host addresses"
+    }
+    
     $exclude = ('239','234','224' | ForEach-Object {"^$_"}) -join '|'
 
     $maccache = New-Object System.Collections.Generic.List[PSCustomobject]
 
-    $mactable = (Invoke-RestMethod https://gitlab.com/wireshark/wireshark/-/raw/master/manuf) -replace '\t','|' |
+    $mactable = (Invoke-RestMethod https://www.wireshark.org/download/automated/data/manuf) -replace '\t','|' |
         ConvertFrom-Csv -Delimiter '|' -Header MAC,'VendorCode','Vendor' | Where-Object mac -notmatch '^[#]'
     
     $arpcache = switch -Regex (arp -a){
