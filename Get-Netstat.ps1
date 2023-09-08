@@ -23,34 +23,65 @@ Function Get-Netstat {
         }
     }
 
-    $output = switch -Regex (netstat -ano){
-        'TCP' {
-            , -split $_ | ForEach-Object {
-                $sb.Invoke($($_[0,4,3]))
-            }
+    if($IsLinux){
+        $netstat = which netstat
+
+        if(-not $netstat){
+            Write-Warning "netstat utility not found"
+            continue
         }
-        'UDP' {
-            , -split $_ | ForEach-Object {
-                $sb.Invoke($_[0],$_[3],'STATELESS')
+
+        $output = (&$netstat -tunpl) + (&$netstat -tunp)
+
+        switch -Regex ($output){
+            '(TCP.+)\s(?<PID>\d+/.+?)$' {
+                $processid,$program = $matches.PID -split '/'
+                , -split $matches.1 | ForEach-Object {
+                    $localaddr,$localport,$remoteaddr,$remoteport = $_[3..4] -split ':(?=[^:]+$)'
+
+                    [PSCustomObject]@{
+                        Protocol      = $_[0]
+                        LocalAddress  = $localaddr
+                        LocalPort     = $localport
+                        RemoteAddress = $remoteaddr
+                        RemotePort    = $remoteport
+                        ProcessID     = $processid
+                        State         = $_[5]
+                    }
+                }
             }
-        }
-    }
-
-    if($IncludeProcessDetails){
-        $process = Get-CimInstance -ClassName Win32_Process | Group-Object -Property ProcessID -AsHashTable -AsString
-
-        $output | ForEach-Object {
-            $owner = $process[$_.processid] | Invoke-CimMethod -MethodName GetOwner |ForEach-Object{
-                if($_.returnvalue -eq 0){$_.Domain,$_.User -join '\'}
-            }
-
-            $_ | Select-Object *,@{n='FilePath';e={$process.$($_.processid).Path}},
-                                 @{n='Owner';e={$owner}},
-                                 @{n='StartTime';e={$process.$($_.processid).CreationDate}},
-                                 @{n='CommandLine';e={$process.$($_.processid).CommandLine}}
         }
     }
     else{
-        $output
+        $output = switch -Regex (netstat -ano){
+            'TCP' {
+                , -split $_ | ForEach-Object {
+                    $sb.Invoke($($_[0,4,3]))
+                }
+            }
+            'UDP' {
+                , -split $_ | ForEach-Object {
+                    $sb.Invoke($_[0],$_[3],'STATELESS')
+                }
+            }
+        }
+
+        if($IncludeProcessDetails){
+            $process = Get-CimInstance -ClassName Win32_Process | Group-Object -Property ProcessID -AsHashTable -AsString
+
+            $output | ForEach-Object {
+                $owner = $process[$_.processid] | Invoke-CimMethod -MethodName GetOwner |ForEach-Object{
+                    if($_.returnvalue -eq 0){$_.Domain,$_.User -join '\'}
+                }
+
+                $_ | Select-Object *,@{n='FilePath';e={$process.$($_.processid).Path}},
+                                     @{n='Owner';e={$owner}},
+                                     @{n='StartTime';e={$process.$($_.processid).CreationDate}},
+                                     @{n='CommandLine';e={$process.$($_.processid).CommandLine}}
+            }
+        }
+        else{
+            $output
+        }
     }
 }
