@@ -31,7 +31,16 @@ Function Get-Netstat {
             continue
         }
 
-        $output = (&$netstat -tunpl) + (&$netstat -tunp)
+        $sudo = which sudo
+
+        $output = if($sudo){
+            & $sudo $netstat -tunpl
+            & $sudo $netstat -tunp
+        }
+        else{
+            & $netstat -tunpl
+            & $netstat -tunp
+        }
 
         switch -Regex ($output){
             '(TCP.+)\s(?<PID>\d+/.+?)$' {
