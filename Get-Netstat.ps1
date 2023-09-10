@@ -48,23 +48,30 @@ Function Get-Netstat {
         }
 
         $output = switch -Regex ($output){
-            '(TCP.+)\s(?<PID>\d+/.+?)$' {
+            '(?<Line>TCP.+)\s(?<PID>\d+/.+?|-)$' {
                 $processid,$program = $matches.PID -split '/'
-                , -split $matches.1 | ForEach-Object {
+                , -split $matches.line | ForEach-Object {
                     $sb.Invoke($($_[0,3,4] + $processid + $_[5]))
+                }
+            }
+            'UDP' {
+                , -split $_ | ForEach-Object {
+                    $sb.Invoke($($_[0,3,4,5] + 'STATELESS'))
                 }
             }
         }
 
         if($IncludeProcessDetails){
             $output | ForEach-Object {
-                $process = Get-Process -PID $_.ProcessID
-                $starttime = $process.StartTime
+                if($_.ProcessID -match '\d+'){
+                    $process = Get-Process -PID $_.ProcessID
+                    $starttime = $process.StartTime
 
-                $owner = (ps -o user,pid | ForEach-Object{
-                    , -split $_ | ForEach-Object{
-                        [PSCustomObject]@{User=$_[0];PID=$_[1]}
-                    } }|where pid -eq  $_.ProcessID).user
+                    $owner = (ps -o user,pid | ForEach-Object{
+                        , -split $_ | ForEach-Object{
+                            [PSCustomObject]@{User=$_[0];PID=$_[1]}
+                        }}|where pid -eq  $_.ProcessID).user
+                }
 
                 $_ | Select-Object $selectprops
             }
