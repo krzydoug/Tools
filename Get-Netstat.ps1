@@ -8,8 +8,8 @@ Function Get-Netstat {
     # https://www.reddit.com/r/PowerShell/comments/khiwjo/parsing_netstat_ano/
 
     $sb = {
-        param($proto,$remote,$local,$pcid,$state)
-        $localaddr,$localport,$remoteaddr,$remoteport = $remote,$local |
+        param($proto,$local,$remote,$pcid,$state)
+        $localaddr,$localport,$remoteaddr,$remoteport = $local,$remote |
             Foreach-Object {-split ($_ -replace '(^.+):(.+$)','$1 $2')}
             
         [PSCustomObject]@{
