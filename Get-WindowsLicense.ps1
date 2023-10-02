@@ -1,4 +1,4 @@
- function Get-WindowsLicense {
+function Get-WindowsLicense {
     [cmdletbinding()]
     Param()
         
