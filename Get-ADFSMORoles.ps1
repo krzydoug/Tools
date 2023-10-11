@@ -1,6 +1,15 @@
 Function Get-ADFSMORoles {
-    $forest = [System.DirectoryServices.ActiveDirectory.Forest]::GetCurrentForest()
-    $domain = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+    try{
+        $domain = [System.DirectoryServices.ActiveDirectory.Domain]::GetComputerDomain()
+        $forest = [System.DirectoryServices.ActiveDirectory.Forest]::GetCurrentForest()
+    }
+    catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryObjectNotFoundException]{
+        Write-Warning $_.exception.message
+        return
+    }
+    catch{
+        throw $_
+    }
 
     [PSCustomObject]@{
         PDCEmulator          = $domain.PDCRoleOwner
