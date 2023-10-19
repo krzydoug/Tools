@@ -11,7 +11,7 @@ Function Get-AuditPolicyConfiguration {
     $ht = [ordered]@{}
 
     switch -Regex ($auditconfig) {
-        '^(\w+)' {
+        '^(\w.+)' {
             $current = $Matches.1
             $ht.$current = [ordered]@{}
         }
