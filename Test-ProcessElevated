@@ -183,7 +183,12 @@ namespace SecurityUtils
     }
 
     process {
-        return [SecurityUtils.Win32]::IsProcessElevated($Process)
+        try{
+            [SecurityUtils.Win32]::IsProcessElevated($Process)
+        }
+        catch [System.Management.Automation.MethodInvocationException]{
+            $true
+        }
     }
 
     end {
