@@ -17,7 +17,7 @@ Function Send-WakeOnLan {
             Write-Verbose "Resolving IP to MAC address"
 
             switch -Regex (arp -a){
-                "$IP" {
+                "^\s+$([regex]::Escape($IP))" {
                     (-split $_)[1]
                 }
             }
