@@ -9,7 +9,7 @@ Function New-VMGuestNetIPAddress{
        $creds = Get-Credential
 
        $Params = @{
-           VM              = 'prod-w16-app'
+           VM              = 'prod-app01'
            MAC             = '08-00-50-FE-00-11'
            NewIP           = '192.168.1.111'
            DNSServers      = '192.168.1.20','192.168.1.21'
