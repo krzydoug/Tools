@@ -87,7 +87,7 @@ Function New-VMGuestNetIPAddress{
         }
 
         try{
-            New-NetIPAddress @nicparams | ConvertTo-Csv
+            New-NetIPAddress @nicparams | ConvertTo-Csv -NoTypeInformation
         }
         catch{
         }
