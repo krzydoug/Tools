@@ -1,8 +1,18 @@
 Function Get-NetUser {
-    Param($UserName)
+    Param(
+        $UserName = '*',
+        [switch]$Domain
+    )
 
     if(!$script:userlist){
-        $script:userlist = ((net user /domain) -notmatch '--|\\\\|\.$|^$') -split '\s{2,}' | Where-Object {$_}
+        $output = if($Domain){
+            net user /domain
+        }
+        else{
+            net user
+        }
+        
+        $script:userlist = ($output -notmatch '--|\\\\|\.$|^$') -split '\s{2,}' | Where-Object {$_}
     }
 
     foreach($user in $UserName){
@@ -22,7 +32,14 @@ Function Get-NetUser {
         
         $ht = [ordered]@{}
 
-        switch -Regex (net user $user /domain){
+        $output = if($Domain){
+            net user $user /domain
+        }
+        else{
+            net user $user
+        }
+        
+        switch -Regex ($output){
             
             ' - ' {
                 if($_ -match '^\s+(\w.+ - \d.+$)'){
