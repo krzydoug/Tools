@@ -31,7 +31,14 @@ function Get-RemoteCertificate {
         Issuer               : CN=Microsoft Azure RSA TLS Issuing CA 07, O=Microsoft Corporation, C=US
         Subject              : CN=www.microsoft.com, O=Microsoft Corporation, L=Redmond, S=WA, C=US
     .EXAMPLE
-        PS C:\> Get-RemoteCertificate bing.com,powershell.org,amazon.com
+        PS C:\> $sitelist = @'
+                    HostName,Port
+                    bing.com,443
+                    powershell.org,443
+                    amazon.com,443
+                '@ | ConvertFrom-Csv
+
+        PS C:\> $sitelist | Get-RemoteCertificate
         
         Url            Subject                                                         NotAfter             Issuer                                                             
         ---            -------                                                         --------             ------                                                             
