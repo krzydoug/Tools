@@ -97,7 +97,7 @@ Function Get-Signature {
 
         if(-not (Test-Path $sigcheck)){
             try{
-            Invoke-RestMethod -Uri https://live.sysinternals.com/tools/sigcheck.exe -OutFile $sigcheck -UseBasicParsing -ErrorAction Stop
+                Invoke-RestMethod -Uri https://live.sysinternals.com/tools/sigcheck.exe -OutFile $sigcheck -UseBasicParsing -ErrorAction Stop
             }
             catch{
                 Write-Warning "Error downloading sigcheck.exe: $($_.exception.message)"
