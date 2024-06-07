@@ -1,7 +1,3 @@
-# This script updates the "open powershell here" context menu handler to allow using paths with single quotes
-# ***NOTE*** this script changes ownership of the registry key HKCR:\Directory\Background\shell\Powershell\command from TrustedInstaller to Administrators
-# as well as granting full control to Administrators. I have not yet found a way to programatically set the owner back to TrustedInstaller but that can be done in regedit.exe manually
-
 function Enable-Privilege {
     param(
         ## The privilege to adjust. This set is taken from
@@ -82,7 +78,7 @@ function Enable-Privilege {
 '@
 
     $processHandle = (Get-Process -id $ProcessId).Handle
-    
+
     $typeloaded = try{
         [adjpriv].GetType()
     }
@@ -120,7 +116,8 @@ Function Set-RegistryOwner {
     
     $key = [Microsoft.Win32.Registry]::$rootstore.OpenSubKey($Path, [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree, [System.Security.AccessControl.RegistryRights]::TakeOwnership)
     if ($key -eq $null) {
-        Write-Host "Registry key not found: $($root):\$Path"
+        Write-Host "Error opening registry key '$($root):\$Path'" -ForegroundColor Red
+        pause
         return
     }
 
@@ -139,16 +136,57 @@ Function Set-RegistryOwner {
 
 Set-RegistryOwner -Root HKCR -Path Directory\Background\shell\Powershell\command -UserName 'Administrators'
 
-$regKey = [Microsoft.Win32.Registry]::ClassesRoot.OpenSubKey("Directory\Background\shell\Powershell\command",[Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,[System.Security.AccessControl.RegistryRights]::ChangePermissions)
-$regACL = $regKey.GetAccessControl()
-$regRule = New-Object System.Security.AccessControl.RegistryAccessRule ("Administrators","FullControl","ContainerInherit","None","Allow")
-$regACL.SetAccessRule($regRule)
-$regKey.SetAccessControl($regACL)
+try{
+    $regKey = [Microsoft.Win32.Registry]::ClassesRoot.OpenSubKey("Directory\Background\shell\Powershell\command",[Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,[System.Security.AccessControl.RegistryRights]::ChangePermissions)
+    $regACL = $regKey.GetAccessControl()
+    $regRule = New-Object System.Security.AccessControl.RegistryAccessRule ("Administrators","FullControl","ContainerInherit","None","Allow")
+    $regACL.SetAccessRule($regRule)
+    $regKey.SetAccessControl($regACL)
+    Write-Host "Successfully set FullControl permissions for Administrators" -ForegroundColor Green
+}
+catch{
+    Write-Warning "Error setting FullControl permissions for Administrators"
+    pause
+    return
+}
+
+Write-Host "Applying context menu fix for 'Open powershell here'" -ForegroundColor Cyan
 
 $output = reg add HKEY_CLASSES_ROOT\Directory\Background\shell\Powershell\command /d 'powershell.exe -noexit -command Set-Location -literalPath """"""""%V""""""""' /f 2>&1
 
 if($output -match 'operation completed successfully'){
     Write-Host "Set commandline context menu handler successfully" -ForegroundColor Green
+}
+
+Write-Host "Setting permissions and owner back to original values" -ForegroundColor Cyan
+
+try{
+    Write-Host "Setting ReadKey rights for Administrators" -ForegroundColor Cyan
+    $regACL = $regKey.GetAccessControl()
+    $regRule = New-Object System.Security.AccessControl.RegistryAccessRule ("Administrators","Readkey","ContainerInherit","None","Allow")
+    $regACL.SetAccessRule($regRule)
+    $regKey.SetAccessControl($regACL)
+    Write-Host "Successfully set ReadKey permissions for Administrators" -ForegroundColor Green
+}
+catch{
+    Write-Warning "Error setting ReadKey permissions for Administrators"
+}
+
+if(Enable-Privilege SeRestorePrivilege){
+    Write-Host "Setting owner back to TrustedInstaller" -ForegroundColor Cyan
+
+    try{
+        $acl = $regKey.GetAccessControl('owner')
+        $acl.SetOwner([System.Security.Principal.NTAccount]'NT Service\TrustedInstaller')
+        $regKey.SetAccessControl($acl)
+        Write-Host "Successfully set owner as TrustedInstaller" -ForegroundColor Green
+    }
+    catch{
+        Write-Warning "Error setting ReadKey permissions for Administrators"
+    }
+}
+else{
+    Write-Warning "Error setting SeRestorePrivilege rights"
 }
 
 pause
