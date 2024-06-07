@@ -91,6 +91,8 @@ function Enable-Privilege {
     if(-not $typeloaded){
         $type = Add-Type $definition -PassThru -ErrorAction SilentlyContinue
     }
+
+    [adjpriv]::EnablePrivilege($processHandle, $Privilege, $Disable)
 }
 
 Function Set-RegistryOwner {
