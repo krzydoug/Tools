@@ -113,7 +113,7 @@ Function Set-RegistryOwner {
         'HKCU' {'CurrentUser'}
     }
     
-    if($false -eq (Enable-Privilege @("SeTakeOwnershipPrivilege", "SeRestorePrivilege"))){
+    if($false -eq (Enable-Privilege "SeTakeOwnershipPrivilege")){
         Write-Warning "Error enabling takeownership privilege"
         return
     }
