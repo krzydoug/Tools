@@ -88,6 +88,8 @@ function Enable-Privilege {
         $type = Add-Type $definition -PassThru -ErrorAction SilentlyContinue
     }
 
+    Write-Host "Enabling privilege $Privilege" -ForegroundColor Cyan
+
     [adjpriv]::EnablePrivilege($processHandle, $Privilege, $Disable)
 }
 
@@ -108,13 +110,16 @@ Function Set-RegistryOwner {
         'HKCC' {'CurrentConfig'}
         'HKCU' {'CurrentUser'}
     }
-    
+
     if($false -eq (Enable-Privilege "SeTakeOwnershipPrivilege")){
         Write-Warning "Error enabling takeownership privilege"
         return
     }
     
+    Write-Host "Opening registry key '$($root):\$Path'" -ForegroundColor Cyan
+    
     $key = [Microsoft.Win32.Registry]::$rootstore.OpenSubKey($Path, [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree, [System.Security.AccessControl.RegistryRights]::TakeOwnership)
+    
     if ($key -eq $null) {
         Write-Host "Error opening registry key '$($root):\$Path'" -ForegroundColor Red
         pause
@@ -123,70 +128,78 @@ Function Set-RegistryOwner {
 
     $acl = $key.GetAccessControl()
     $owner = [System.Security.Principal.NTAccount]$UserName
+    
+    Write-Host "Setting owner to 'Administrators'" -ForegroundColor Cyan
 
     try{
         $acl.SetOwner($owner)
         $key.SetAccessControl($acl)
-        Write-Host "Ownership of registry key '$($root):\$Path' has been set to $UserName" -ForegroundColor Green
+        Write-Host "Ownership updated successfully" -ForegroundColor Green
     }
     catch{
         Write-Warning "Error setting ownership: $($_.exception.message)"
     }
 }
 
-Set-RegistryOwner -Root HKCR -Path Directory\Background\shell\Powershell\command -UserName 'Administrators'
+$pathlist = 'Directory\Background\shell\Powershell\command', 'Directory\shell\Powershell\command'
 
-try{
-    $regKey = [Microsoft.Win32.Registry]::ClassesRoot.OpenSubKey("Directory\Background\shell\Powershell\command",[Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,[System.Security.AccessControl.RegistryRights]::ChangePermissions)
-    $regACL = $regKey.GetAccessControl()
-    $regRule = New-Object System.Security.AccessControl.RegistryAccessRule ("Administrators","FullControl","ContainerInherit","None","Allow")
-    $regACL.SetAccessRule($regRule)
-    $regKey.SetAccessControl($regACL)
-    Write-Host "Successfully set FullControl permissions for Administrators" -ForegroundColor Green
-}
-catch{
-    Write-Warning "Error setting FullControl permissions for Administrators"
-    pause
-    return
-}
+foreach($regpath in $pathlist){
+    Write-Host "Processing registry path 'HKEY_CLASSES_ROOT\$regpath'" -ForegroundColor Cyan
 
-Write-Host "Applying context menu fix for 'Open powershell here'" -ForegroundColor Cyan
-
-$output = reg add HKEY_CLASSES_ROOT\Directory\Background\shell\Powershell\command /d 'powershell.exe -noexit -command Set-Location -literalPath """"""""%V""""""""' /f 2>&1
-
-if($output -match 'operation completed successfully'){
-    Write-Host "Set commandline context menu handler successfully" -ForegroundColor Green
-}
-
-Write-Host "Setting permissions and owner back to original values" -ForegroundColor Cyan
-
-try{
-    Write-Host "Setting ReadKey rights for Administrators" -ForegroundColor Cyan
-    $regACL = $regKey.GetAccessControl()
-    $regRule = New-Object System.Security.AccessControl.RegistryAccessRule ("Administrators","Readkey","ContainerInherit","None","Allow")
-    $regACL.SetAccessRule($regRule)
-    $regKey.SetAccessControl($regACL)
-    Write-Host "Successfully set ReadKey permissions for Administrators" -ForegroundColor Green
-}
-catch{
-    Write-Warning "Error setting ReadKey permissions for Administrators"
-}
-
-if(Enable-Privilege SeRestorePrivilege){
-    Write-Host "Setting owner back to TrustedInstaller" -ForegroundColor Cyan
+    Set-RegistryOwner -Root HKCR -Path $regpath -UserName 'Administrators'
 
     try{
-        $acl = $regKey.GetAccessControl('owner')
-        $acl.SetOwner([System.Security.Principal.NTAccount]'NT Service\TrustedInstaller')
-        $regKey.SetAccessControl($acl)
-        Write-Host "Successfully set owner as TrustedInstaller" -ForegroundColor Green
+        $regKey = [Microsoft.Win32.Registry]::ClassesRoot.OpenSubKey($regpath,[Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,[System.Security.AccessControl.RegistryRights]::ChangePermissions)
+        $regACL = $regKey.GetAccessControl()
+        $regRule = New-Object System.Security.AccessControl.RegistryAccessRule ("Administrators","FullControl","ContainerInherit","None","Allow")
+        $regACL.SetAccessRule($regRule)
+        $regKey.SetAccessControl($regACL)
+        Write-Host "Successfully set FullControl permissions for Administrators" -ForegroundColor Green
+    }
+    catch{
+        Write-Warning "Error setting FullControl permissions for Administrators"
+        pause
+        return
+    }
+
+    Write-Host "Applying context menu fix for 'Open powershell here'" -ForegroundColor Cyan
+
+    $output = reg add HKEY_CLASSES_ROOT\$regpath /d 'powershell.exe -noexit -command Set-Location -literalPath \\\"%V\\\"' /f 2>&1
+
+    if($output -match 'operation completed successfully'){
+        Write-Host "Set commandline context menu handler successfully" -ForegroundColor Green
+    }
+
+    Write-Host "Setting permissions and owner back to original values" -ForegroundColor Cyan
+
+    try{
+        Write-Host "Setting ReadKey rights for Administrators" -ForegroundColor Cyan
+        $regACL = $regKey.GetAccessControl()
+        $regRule = New-Object System.Security.AccessControl.RegistryAccessRule ("Administrators","Readkey","ContainerInherit","None","Allow")
+        $regACL.SetAccessRule($regRule)
+        $regKey.SetAccessControl($regACL)
+        Write-Host "Successfully set ReadKey permissions for Administrators" -ForegroundColor Green
     }
     catch{
         Write-Warning "Error setting ReadKey permissions for Administrators"
     }
-}
-else{
-    Write-Warning "Error setting SeRestorePrivilege rights"
+
+    if(Enable-Privilege SeRestorePrivilege){
+        Write-Host "Setting owner back to TrustedInstaller" -ForegroundColor Cyan
+
+        try{
+            $acl = $regKey.GetAccessControl('owner')
+            $acl.SetOwner([System.Security.Principal.NTAccount]'NT Service\TrustedInstaller')
+            $regKey.SetAccessControl($acl)
+            Write-Host "Successfully set owner as TrustedInstaller" -ForegroundColor Green
+        }
+        catch{
+            Write-Warning "Error setting ReadKey permissions for Administrators"
+        }
+    }
+    else{
+        Write-Warning "Error setting SeRestorePrivilege rights"
+    }
 }
 
 pause
