@@ -16,7 +16,7 @@ Function Get-AuditPolicyConfiguration {
             $ht.$current = [ordered]@{}
         }
 
-        '^\s+(.+?)\s{3,}(.+)' {
+        '^\s+(.+?)\s{2,}(.+)' {
             $ht."$($current)"."$($matches.1)" = $Matches.2
         }
     }
