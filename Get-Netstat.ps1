@@ -9,6 +9,7 @@ Function Get-Netstat {
 
     $sb = {
         param($proto,$local,$remote,$pcid,$state)
+        $pcid, $program = $pcid -split '/'
         $localaddr,$localport,$remoteaddr,$remoteport = $local,$remote |
             Foreach-Object {-split ($_ -replace '(^.+):(.+$)','$1 $2')}
             
@@ -49,12 +50,11 @@ Function Get-Netstat {
 
         $output = switch -Regex ($output){
             '(?<Line>TCP.+)\s(?<PID>\d+/.+?|-)$' {
-                $processid,$program = $matches.PID -split '/'
-                , -split $matches.line | ForEach-Object {
-                    $sb.Invoke($($_[0,3,4] + $processid + $_[5]))
+                , -split $_ | ForEach-Object {
+                    $sb.Invoke($($_[0,3,4,6] + $_[5]))
                 }
             }
-            'UDP' {
+            '(?<Line>UDP.+)\s(?<PID>\d+/.+?|-)$' {
                 , -split $_ | ForEach-Object {
                     $sb.Invoke($($_[0,3,4,5] + 'STATELESS'))
                 }
@@ -64,13 +64,14 @@ Function Get-Netstat {
         if($IncludeProcessDetails){
             $output | ForEach-Object {
                 if($_.ProcessID -match '\d+'){
-                    $process = Get-Process -PID $_.ProcessID
+                    $process = Get-Process -PID $_.ProcessID -IncludeUserName
                     $starttime = $process.StartTime
 
-                    $owner = (ps -o user,pid | ForEach-Object{
+                    $owner = ((ps -o user,pid) + $(if($sudo){(ps -U root -o user,pid) + (sudo ps -o user,pid)}) | ForEach-Object{
                         , -split $_ | ForEach-Object{
                             [PSCustomObject]@{User=$_[0];PID=$_[1]}
                         }}|where pid -eq  $_.ProcessID).user
+                    $owner = $process.Username
                 }
 
                 $_ | Select-Object $selectprops
@@ -98,11 +99,15 @@ Function Get-Netstat {
             $processlist = Get-CimInstance -ClassName Win32_Process | Group-Object -Property ProcessID -AsHashTable -AsString
 
             $output | ForEach-Object {
+                $process = Get-Process -Id $_.ProcessID -IncludeUserName
+                $owner = $process.username
                 $process = $processlist[$_.processid]
                 $starttime = $process.CreationDate
 
-                $owner = $process | Invoke-CimMethod -MethodName GetOwner |ForEach-Object{
-                    if($_.returnvalue -eq 0){$_.Domain,$_.User -join '\'}
+                if($null -eq $owner){
+                    $process | Invoke-CimMethod -MethodName GetOwner | ForEach-Object{
+                        $owner = if($_.returnvalue -eq 0){$_.Domain,$_.User -join '\'}
+                    }
                 }
 
                 $_ | Select-Object $selectprops
