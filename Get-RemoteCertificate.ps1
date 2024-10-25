@@ -145,7 +145,7 @@ function Get-RemoteCertificate {
                         $cert | Add-Member -MemberType ScriptProperty -Name EnhancedKeyUsageList -Value {(new-object Microsoft.Powershell.Commands.EnhancedKeyUsageProperty -argumentlist $this).EnhancedKeyUsageList} -Force
                         $cert | Add-Member -NotePropertyName Url -NotePropertyValue $site -Force
                         $cert | Add-Member -NotePropertyName Protocollist -NotePropertyValue $_ -Force
-                        $cert | Add-Member -NotePropertyName DaysRemaining -NotePropertyValue $certExpiresIn -PassThru -Force
+                        $cert | Add-Member -NotePropertyName DaysRemaining -NotePropertyValue ($cert.NotAfter - (Get-Date)).Days -PassThru -Force
     
                     }
                     catch {}
