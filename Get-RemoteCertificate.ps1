@@ -123,7 +123,7 @@ function Get-RemoteCertificate {
         
         foreach($site in $HostName){
             try {
-                $output = "ssl2", "ssl3", "tls", "tls11", "tls12" | %{
+                $output = "ssl2", "ssl3", "tls", "tls11", "tls12", "tls13" | %{
                     $TcpClient = New-Object Net.Sockets.TcpClient
                     $TcpClient.Connect($site, $Port)
                     $SslStream = New-Object Net.Security.SslStream $TcpClient.GetStream(),
