@@ -5,19 +5,20 @@ Function Get-UAC {
     $ErrorActionPreference = 'Stop'
 
     $levelList = @{
-        '511' = "Default"
-        '211' = "Always Notify"
-        '501' = "Sometimes Notify"
-        '000' = "Never Notify"
+        '51' = "Default"
+        '21' = "Always Notify"
+        '50' = "Sometimes Notify"
+        '00' = "Never Notify"
     }
 
     try{
         $values = "ConsentPromptBehaviorAdmin", "PromptOnSecureDesktop", "EnableLUA" | ForEach-Object {
-            Write-Verbose "Reading registry value HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\$_"
-            (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name $_).$_
+            $current = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name $_).$_
+            Write-Verbose "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\$_  -  $current"
+            $current
         }
 
-        $levelList[-join $values]
+        $levelList[-join $values[0,1]]
     }
     catch{
         Write-Warning $_.exception.message
