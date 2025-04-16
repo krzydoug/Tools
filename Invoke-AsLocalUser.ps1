@@ -13,6 +13,8 @@ Function Invoke-AsLocalUser {
 
         $ErrorActionPreference = 'Stop'
 
+        Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+
         $nuget = Get-PackageProvider -Name NuGet -ListAvailable -ErrorAction SilentlyContinue |
                      Sort-Object -Property {[version]$_.version} | Select-Object -Last 1
 
