@@ -11,31 +11,20 @@ Function Invoke-IntuneSync {
         [switch]$All = $true
     )
 
-    $ErrorActionPreference = 'Stop'
-
-    $result = "No Error"
-
     Write-Verbose "Invoke-IntuneSync initializing" -Verbose
 
     $scriptsscript = {
-        try{
-            $imelogdir = 'C:\ProgramData\Microsoft\IntuneManagementExtension\Logs'
-            $imelog = Join-Path $imelogdir 'IntuneManagementExtension.log'
+        $imelogdir = 'C:\ProgramData\Microsoft\IntuneManagementExtension\Logs'
+        $imelog = Join-Path $imelogdir 'IntuneManagementExtension.log'
 
-            Write-Verbose "Initializing Intune Sync App" -Verbose
+        Write-Verbose "Initializing Intune Sync App" -Verbose
 
-            $usererrorpattern = 'failed to get aad token|requested resource requires user auth|user check is failed'
+        $usererrorpattern = 'failed to get aad token|requested resource requires user auth|user check is failed'
 
-            $lastline = Get-Content $imelog -Tail 1
+        $lastline = Get-Content $imelog -Tail 1
 
-            $Shell = New-Object -ComObject Shell.Application
-            $Shell.open("intunemanagementextension://syncapp")
-        }
-        catch{
-            Write-Warning $_.exception.message
-            $result = 'Error'
-            return
-        }
+        $Shell = New-Object -ComObject Shell.Application
+        $Shell.open("intunemanagementextension://syncapp")
 
         $isnew = $false
 
@@ -85,18 +74,12 @@ Function Invoke-IntuneSync {
         Write-Verbose "Initializing Intune policies sync session" -Verbose 
 
         $state = ''
-        try{
-            $null = [Windows.Management.MdmSessionManager,Windows.Management,ContentType=WindowsRuntime]
 
-            $session = [Windows.Management.MdmSessionManager]::TryCreateSession()
+        $null = [Windows.Management.MdmSessionManager,Windows.Management,ContentType=WindowsRuntime]
 
-            $null = $session.StartAsync()
-        }
-        catch{
-            Write-Warning $_.exception.message
-            $result = 'Error'
-            return
-        }
+        $session = [Windows.Management.MdmSessionManager]::TryCreateSession()
+
+        $null = $session.StartAsync()
 
         $timer = 0
 
@@ -124,27 +107,41 @@ Function Invoke-IntuneSync {
         'All' {
             $scriptssyncresult = . $scriptsscript
             $policysyncresult = . $policiesscript
-            $scriptsync = $policysync = $true
+            $scriptssync = $policysync = $true
+            $result = if($scriptssyncresult -eq $false -or $policysyncresult -eq $false){
+                'Error'
+            }
+            else{
+                'No Error'
+            }
         }
         'ScriptsandApps' {
             $scriptssyncresult = . $scriptsscript
-            $scriptsync = $true
+            $scriptssync = $true
+            $result = if($scriptssyncresult -eq $false){
+                'Error'
+            }
+            else{
+                'No Error'
+            }
         }
         'Policies' {
             $policysyncresult = . $policiesscript
             $policysync = $true
+            $result = if($policysyncresult -eq $false){
+                'Error'
+            }
+            else{
+                'No Error'
+            }
         }
-    }
-
-   if($scriptssync -eq $false -or $policysync -eq $false){
-         $result = 'Error'
     }
 
     [PSCustomObject]@{
         ComputerName = $env:COMPUTERNAME
         UserName     = $user
-        ScriptSync   = $scriptsync
-        PolicySync   = $policysync
+        ScriptSync   = $scriptssync -eq $true
+        PolicySync   = $policysync -eq $true
         Result       = $result
     }
 }
