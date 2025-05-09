@@ -5,10 +5,18 @@ Function Get-UAC {
     $ErrorActionPreference = 'Stop'
 
     $levelList = @{
-        '51' = "Default"
-        '21' = "Always Notify"
-        '50' = "Sometimes Notify"
-        '00' = "Never Notify"
+        '511' = "Default"
+        '211' = "Always Notify"
+        '201' = "Always Notify"
+        '501' = "Sometimes Notify"
+        '000' = "Never Notify"
+        '001' = "Never Notify"
+        '010' = "Never Notify"
+        '011' = "Never Notify"
+        '500' = "Never Notify"
+        '200' = "Never Notify"
+        '210' = "Never Notify"
+        '510' = "Never Notify"
     }
 
     try{
@@ -18,7 +26,7 @@ Function Get-UAC {
             $current
         }
 
-        $levelList[-join $values[0,1]]
+        $levelList[-join $values]
     }
     catch{
         Write-Warning $_.exception.message
