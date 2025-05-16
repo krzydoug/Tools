@@ -61,20 +61,21 @@ Function Get-InstalledPrograms {
                                 $InstallLocation = $Readkey.GetValue("InstallLocation")
                                 $DisplayVersion = $Readkey.GetValue("DisplayVersion")
                                 $UninstallString = $readkey.GetValue("UninstallString")
+                                $UninstallString = $readkey.GetValue("QuietUninstallString")
                                 }
                                 catch{}
                                 $properties = [ordered]@{
-                                    PC = $PC
-                                    Displayname = $displayname
-                                    Version = $DisplayVersion
-                                    Architecture = $_.bit
-                                    Installed = $Installdate
-                                    InstallPath = $InstallLocation
-                                    UninstallString = $UninstallString
-                                    Subkey= $key
+                                    PC                   = $PC
+                                    Displayname          = $displayname
+                                    Version              = $DisplayVersion
+                                    Architecture         = $_.bit
+                                    Installed            = $Installdate
+                                    InstallPath          = $InstallLocation
+                                    UninstallString      = $UninstallString
+                                    QuietUninstallString = $QuietUninstallString
+                                    Subkey               = $key
                             }
-                            $obj = New-Object -TypeName PSObject -Property $properties
-                            write-output $obj
+                            New-Object -TypeName PSObject -Property $properties
                             }
                         }
 
