@@ -108,7 +108,7 @@ Function Get-Signature {
     process{
         foreach($file in $Path){
             try{
-                $output = sigcheck.exe -nobanner -accepteula -i $file.FullName
+                $output = & $sigcheck -nobanner -accepteula -i $file.FullName
             }
             catch{
                 Write-Warning "Error running sigcheck.exe: $($_.exception.message)"
