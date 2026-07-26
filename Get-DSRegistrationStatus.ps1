@@ -16,7 +16,14 @@ Function Get-DSRegistrationStatus {
                 $prop = $matches.1
                 $ht.$prop = [ordered]@{}
                 switch -Regex ($matches.2 -split '\r?\n'){
-                    ':' {$ht.$prop += $_ -replace ':','=' -replace '\\','\\' | ConvertFrom-StringData}
+                    '^\s*(?<Property>.+?) : (?<Value>.+?)$' {
+                        if($ht.$prop[$matches.Property]){
+                            $ht.$prop.$($matches.Property) += " $($matches.Value)"
+                        }
+                        else{
+                            $ht.$prop.$($matches.Property) = $matches.Value
+                        }
+                    } #{$ht.$prop += $_ -replace ':','=' -replace '\\','\\' | ConvertFrom-StringData}
                 }
                 $ht.$prop = [PSCustomObject]$ht.$prop
             }
