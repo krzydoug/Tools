@@ -1,104 +1,103 @@
 Function Get-InstalledPrograms {
-    [cmdletbinding()]
+
+    [CmdletBinding(DefaultParameterSetName="UserDefined")]
+
     Param(
-        $Computername,
-        [string[]]$Name = ''
+        [Parameter(Position=0)]
+        [Alias("ProgramName","PN")]
+            [String[]]$Name,
+
+        [Parameter(Position=1,ParameterSetName="UserDefined")]
+            [String[]]$Property=@("DisplayName","DisplayVersion","InstallDate","InstallSource","UninstallString","QuietUninstallString","EstimatedSize","Guid"),
+    
+        [Parameter(Position=2,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
+        [Alias("CN")]
+            [String[]]$ComputerName=$env:COMPUTERNAME,
+
+        [Parameter(Mandatory=$true,ParameterSetName="All")]
+            [Switch]$All
     )
 
-    Write-Verbose "Gathering programs on $computername"
+    Begin {
+        $proplist = New-Object System.Collections.Generic.List[string]
+        $finalproplist = New-Object System.Collections.Generic.List[string]
+        $finalproplist.Add('GUID')
 
-    $params = @{
-        ScriptBlock   = {
-            Param(
-                [string]$name
-            )
+        $ProgCmd = {
+            Param($prog,$props)
+            $programs = @()
+            $Is64Bit = (Get-WmiObject Win32_OperatingSystem).OSArchitecture -eq "64-bit"
 
-            Function Get-InstalledPrograms{
-                [cmdletbinding()]
-                Param([alias("CN","ComputerName","HostName","Computer")][parameter(ValuefromPipeline=$true,ValueFromPipelineByPropertyName=$true)]$Name)
-
-                begin{}
-                process{
-                    if(-not $Name){$Name = $env:COMPUTERNAME}
-                        FOREACH ($PC in $Name) {
-                        $computername=$PC
- 
-                        # Branch of the Registry  
-                        $Branch='LocalMachine'
-                        0..1 | ForEach-Object {
-                            try{
-                                $regservice = Get-Service -Name RemoteRegistry -ComputerName $pc -ErrorAction Stop
-                            }catch{
-                                if($_ -eq 2){
-                                    Write-Warning "Unable to query remoteregistry on $PC"
-                                    break
-                                }
-                            }
-                        }
-                        $tracker = New-Object System.Collections.ArrayList
-                        try{
-                            if($regservice.StartType -eq 'disabled'){Set-Service -InputObject $regservice -StartupType Manual -ErrorAction stop;$servicedisabled = $true}
-                            if($regservice.Status -ne 'running'){Start-Service -InputObject $regservice  -ErrorAction SilentlyContinue;$servicestarted = $true;Start-Sleep -Seconds 2}
-                        }catch{
-                            write-warning "Unable to reach remote registry service on $PC";break
-                        }
-
-                        if((Get-Service -Name RemoteRegistry -ComputerName $computername -ErrorAction SilentlyContinue).status -ne 'running'){write-warning "Unable to reach remote registry service on $PC";break}
-                        $SubBranch="SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"   
-                        @{View=512;Bit='32-Bit'},@{View=256;Bit='64-Bit'} | ForEach-Object{
-                            $registry= [microsoft.win32.registrykey]::OpenremoteBaseKey($Branch,$PC,$_.view)
-                            $registrykey=$registry.OpenSubKey($Subbranch)
-                            $subkeys = $registrykey.GetSubKeyNames()
-                            Foreach ($key in $subkeys)  
-                            {
-                                if($key -in $tracker.key){continue}
-                                [void]$tracker.Add(@{Key=$key})
-                                $NewSubKey = $SubBranch+"\\"+$key
-                                $Readkey = $registry.OpenSubKey($NewSubKey)
-                                try{
-                                $Displayname = $Readkey.GetValue("DisplayName")
-                                $Installdate = $readkey.GetValue("InstallDate")
-                                $InstallLocation = $Readkey.GetValue("InstallLocation")
-                                $DisplayVersion = $Readkey.GetValue("DisplayVersion")
-                                $UninstallString = $readkey.GetValue("UninstallString")
-                                $UninstallString = $readkey.GetValue("QuietUninstallString")
-                                }
-                                catch{}
-                                $properties = [ordered]@{
-                                    PC                   = $PC
-                                    Displayname          = $displayname
-                                    Version              = $DisplayVersion
-                                    Architecture         = $_.bit
-                                    Installed            = $Installdate
-                                    InstallPath          = $InstallLocation
-                                    UninstallString      = $UninstallString
-                                    QuietUninstallString = $QuietUninstallString
-                                    Subkey               = $key
-                            }
-                            New-Object -TypeName PSObject -Property $properties
-                            }
-                        }
-
-                        if($servicedisabled){Set-Service -InputObject $regservice -StartupType Disabled}
-                        if($servicestarted){Stop-Service -InputObject $regservice -ErrorAction SilentlyContinue}
-            
+            if ($prog) {
+                if ($Is64Bit) {
+                    $tempProgs = Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*,HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*
+                    foreach ($tp in $tempProgs) {
+                        if ($tp.DisplayName -like $prog) {$programs += $tp}
                     }
                 }
-                end{}
-    
+                else {
+                    $tempProgs = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*
+                    foreach ($tp in $tempProgs) {
+                        if ($tp.DisplayName -like $prog) {$programs += $tp}
+                    }
+                }
+            }
+            else {
+                if ($Is64Bit) {$programs += Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*,HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*}
+                else {$programs += Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*}
             }
 
-            Get-InstalledPrograms | Where-Object displayname -Match $name
+            foreach($program in $programs){
+                $guid = if($guid = $program.UninstallString -replace '.+(?=\{)|(?:\}).+'){
+                    $guid
+                }
+                else{
+                    $program.pschildname
+                }
+                $program | Add-Member -MemberType NoteProperty -Name GUID -Value $guid -Force
+            }
+
+            if ($props -eq "All" -or $props -contains "All" -or $All) {$programs}
+            else {$programs | Select-Object -Property $props | Add-Member -MemberType NoteProperty -Name ComputerName -Value $compName -PassThru}
         }
-        ErrorAction   = 'SilentlyContinue'
-        ErrorVariable = '+errs'
-        ArgumentList  = ($name -join '|')
+
+        Function Choose-Invocation($ProgName, $CompName) {
+            if ($CompName -eq "." -or $CompName -eq "localhost" -or $CompName -eq $env:COMPUTERNAME) {
+                & $ProgCmd $ProgName $Property
+            }
+            else {Invoke-Command -ScriptBlock $ProgCmd -ArgumentList $ProgName,$Property -ComputerName $CompName}
+        }
+
+        Function Get-ProgramFromRegistry ($ProgName, $CompName) {
+            if ($ProgName) {
+                foreach ($n in $ProgName) {
+                    Choose-Invocation -ProgName $n -CompName $CompName
+                }
+            }
+            else {
+                Choose-Invocation -CompName $CompName
+            }
+        }
     }
 
-    if($Computername){
-        $params.ComputerName  = $Computername
-        $params.ThrottleLimit = 300 
+    Process {
+        foreach ($comp in $ComputerName) {
+            $programlist = Get-ProgramFromRegistry -CompName $comp -ProgName $Name
+            foreach($program in $programlist){
+                foreach($propname in $program.psobject.properties){
+                    if($propname.value -and $propname.name -notmatch '^ps'){
+                        if($proplist -notcontains $propname.name){
+                            $proplist.Add($propname.name)
+                        }
+                        else{
+                            if($finalproplist -notcontains $propname.name){
+                                $finalproplist.Add($propname.name)
+                            }
+                        }
+                    }
+                }
+            }
+            $programlist | Select-Object $finalproplist | Select-Object -ExcludeProperty ps*
+        }
     }
-
-    Invoke-Command @params
 }
