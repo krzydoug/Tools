@@ -6,7 +6,33 @@ if (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
         Exit
     }
 }
-        <#
+
+function Get-LatestODT {
+    [cmdletbinding()]
+    Param()
+    $odtdownloadpage = 'https://www.microsoft.com/en-us/download/details.aspx?id=49117'
+    $fallback = 'https://download.microsoft.com/download/6c1eeb25-cf8b-41d9-8d0d-cc1dbc032140/officedeploymenttool_20326-20112.exe'
+
+    Write-Verbose "Querying ODT download page for latest version"
+    $content = Invoke-RestMethod -Uri $odtdownloadpage
+
+    if($content -match 'downloadfile.+?\[{(?<Details>.+?officedeploymenttool_.+?)}\]'){
+        $latestodt = [PSCustomObject]($matches.Details -replace ':(?=")','=' -replace ",","`n" -replace '"' | ConvertFrom-StringData)
+    }
+
+    if($latestodt.url){
+        Write-Verbose "Located ODT version $($latestodt.version) filename $($latestodt.name)"
+        $latestodt.url
+    }
+    else{
+        Write-Verbose "Using fallback URL"
+        $fallback
+    }
+}
+
+$odt = Get-LatestODT
+
+<#
 .SYNOPSIS
     Uninstall all office 365 apps
 .DESCRIPTION
@@ -55,7 +81,7 @@ function Uninstall-Office365 {
         Write-Host Removing Office 365 junkware -ForegroundColor Cyan -NoNewline
 
         try{
-            Invoke-WebRequest -Uri https://download.microsoft.com/download/6c1eeb25-cf8b-41d9-8d0d-cc1dbc032140/officedeploymenttool_19328-20210.exe -UseBasicParsing -OutFile odt.exe
+            Invoke-WebRequest -Uri $odt -UseBasicParsing -OutFile odt.exe
         
             .\odt.exe /extract:$($odtdir.fullname) /quiet
 
