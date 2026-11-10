@@ -30,6 +30,10 @@ function Get-WifiProfile {
     )
     
     begin {
+        # handle more characters correctly
+        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+        $OutputEncoding = [System.Text.Encoding]::UTF8
+
         # Start by getting a list of all existing profiles
         $profiles = netsh wlan show profiles
 
@@ -44,7 +48,7 @@ function Get-WifiProfile {
         
         # Store command as a scriptblock. If $ShowKey is present then key=clear will be added to the command
         # Issue encountered with SSID that include single quote. Replace single quote with asterisk in profile lookup
-        $command = {netsh wlan show profiles $($network -replace "'",'*') ('','key=clear')[$ShowKey.IsPresent]}
+        $command = {netsh wlan show profiles $network ('','key=clear')[$ShowKey.IsPresent]}
 
         $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
         $iselevated = $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
